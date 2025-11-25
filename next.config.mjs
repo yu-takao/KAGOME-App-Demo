@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // API でローカルファイルを読むため、サーバーレス出力に data/* を含める
+  experimental: {
+    outputFileTracingIncludes: {
+      // すべての API ルートで data と server_pdfs を同梱
+      '/api/(.*)': ['data/**/*', 'server_pdfs/**/*'],
+    },
+  },
   async rewrites() {
     return [
       { source: '/marks/:path*', destination: '/api/marks/:path*' },
