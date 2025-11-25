@@ -18,8 +18,7 @@ export default function PackageList() {
       <div className="card">
         <div className="table">
           <div className="thead">
-            <div className="tr">
-              <div className="th" style={{ width: 120 }}>ID</div>
+            <div className="tr" style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px' }}>
               <div className="th">製品名</div>
               <div className="th" style={{ width: 120 }}>版下台紙</div>
               <div className="th" style={{ width: 120 }}>存在マーク</div>
@@ -27,8 +26,7 @@ export default function PackageList() {
           </div>
           <div className="tbody">
             {rows.map(r => (
-              <div className="tr" key={r.id}>
-                <div className="td" style={{ width: 120 }}>{r.id}</div>
+              <div className="tr" key={r.id} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px' }}>
                 <div className="td">{r.name}</div>
                 <div className="td" style={{ width: 120 }}>{r.base}</div>
                 <div className="td" style={{ width: 120 }}>{r.mark}</div>

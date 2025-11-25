@@ -14,7 +14,6 @@ export default function Group() {
               <div className="th" style={{ width: 160 }}>日時</div>
               <div className="th">パッケージ名</div>
               <div className="th" style={{ width: 120 }}>合否</div>
-              <div className="th" style={{ width: 120 }}>検査実行者</div>
             </div>
           </div>
           <div className="tbody">
@@ -29,7 +28,6 @@ export default function Group() {
                     <span className="result-fail" aria-label="不合格">✕ 不合格</span>
                   )}
                 </div>
-                <div className="td" style={{ width: 120 }}>{r.executor}</div>
               </div>
             ))}
           </div>

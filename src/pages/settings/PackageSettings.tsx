@@ -16,9 +16,12 @@ export default function PackageSettings() {
   const [janHeight, setJanHeight] = useState('');
   const [blackBan, setBlackBan] = useState<'あり' | 'なし' | ''>('');
   const [blackAreaRect, setBlackAreaRect] = useState<Rect>(null);
+  const [blackAreaMeta, setBlackAreaMeta] = useState<{ containerWidth: number; containerHeight: number } | null>(null);
   const [strawPdf, setStrawPdf] = useState<string>('');
   const [pdfs, setPdfs] = useState<{ name: string; url: string }[]>([]);
   const [showPicker, setShowPicker] = useState<boolean>(false);
+
+  const PX_TO_MM = 0.1; // ダミー変換: 1px = 0.1ｍｍ 相当で表示
 
   return (
     <div>
@@ -167,10 +170,26 @@ export default function PackageSettings() {
           <div className="form-row" style={{ alignItems: 'start' }}>
             <label className="form-label">指定エリア</label>
             <div style={{ width: '100%' }}>
-              <RegionSelector imageSrc={'/png/枠線.png'} height={280} onChange={setBlackAreaRect} />
+              <RegionSelector
+                imageSrc={'/png/枠線.png'}
+                height={280}
+                onChange={(r, meta) => { setBlackAreaRect(r); if (meta) setBlackAreaMeta(meta); }}
+              />
               <div className="form-hint" style={{ marginTop: 8 }}>
                 現在の矩形: {blackAreaRect ? `${Math.round(blackAreaRect.x)},${Math.round(blackAreaRect.y)} ${Math.round(blackAreaRect.width)}x${Math.round(blackAreaRect.height)}` : '未指定'}
               </div>
+              {blackAreaRect && blackAreaMeta && (
+                <div className="form-hint" style={{ marginTop: 4 }}>
+                  {(() => {
+                    const leftPx = Math.max(0, Math.round(blackAreaRect.x));
+                    const topPx = Math.max(0, Math.round(blackAreaRect.y));
+                    const rightPx = Math.max(0, Math.round(blackAreaMeta.containerWidth - (blackAreaRect.x + blackAreaRect.width)));
+                    const bottomPx = Math.max(0, Math.round(blackAreaMeta.containerHeight - (blackAreaRect.y + blackAreaRect.height)));
+                    const toMm = (px: number) => (Math.round(px * PX_TO_MM * 10) / 10).toFixed(1);
+                    return `余白: 上 ${toMm(topPx)}ｍｍ / 右 ${toMm(rightPx)}ｍｍ / 下 ${toMm(bottomPx)}ｍｍ / 左 ${toMm(leftPx)}ｍｍ`;
+                  })()}
+                </div>
+              )}
             </div>
           </div>
         )}

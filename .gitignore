@@ -1,4 +1,29 @@
-﻿node_modules/
+﻿# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build artifacts
+dist/
+
+# Local dev storage
+server_pdfs/
+
+# Env / local config
+.env
+.env.local
+.env.*.local
+amplify_outputs.json
+
+# OS/Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+node_modules/
 dist/
 .vite/
 server_pdfs/

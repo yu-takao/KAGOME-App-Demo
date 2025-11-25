@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 export default function BasePaperList() {
   const navigate = useNavigate();
   const rows = [
-    { id: 'B-001', name: '200ml 台紙A', type: '枠線', color: '#7C3AED' },
-    { id: 'B-002', name: '330ml 台紙B', type: '領域塗りつぶし', color: '#1E66F5' },
+    { id: 'B-001', company: 'テトラパック', name: '200ml 台紙A', basePdf: 'tba200a.pdf', straw: false, strawPdf: '' },
+    { id: 'B-002', company: 'ダイナパック', name: '900ml 台紙B', basePdf: 'dp900b.pdf', straw: true, strawPdf: 'straw900.pdf' },
   ];
   return (
     <div>
@@ -17,22 +17,22 @@ export default function BasePaperList() {
       <div className="card">
         <div className="table">
           <div className="thead">
-            <div className="tr">
-              <div className="th" style={{ width: 120 }}>ID</div>
+            <div className="tr" style={{ display: 'grid', gridTemplateColumns: '160px 1fr 200px 100px 200px' }}>
+              <div className="th" style={{ width: 160 }}>印刷会社</div>
               <div className="th">台紙名</div>
-              <div className="th" style={{ width: 140 }}>タイプ</div>
-              <div className="th" style={{ width: 120 }}>台紙色</div>
+              <div className="th" style={{ width: 200 }}>台紙PDF</div>
+              <div className="th" style={{ width: 100 }}>ストロー</div>
+              <div className="th" style={{ width: 200 }}>ストローPDF</div>
             </div>
           </div>
           <div className="tbody">
             {rows.map(r => (
-              <div className="tr" key={r.id}>
-                <div className="td" style={{ width: 120 }}>{r.id}</div>
+              <div className="tr" key={r.id} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 200px 100px 200px' }}>
+                <div className="td" style={{ width: 160 }}>{r.company}</div>
                 <div className="td">{r.name}</div>
-                <div className="td" style={{ width: 140 }}>{r.type}</div>
-                <div className="td" style={{ width: 120 }}>
-                  <span className="swatch" style={{ background: r.color }} /> {r.color}
-                </div>
+                <div className="td" style={{ width: 200 }}>{r.basePdf || '-'}</div>
+                <div className="td" style={{ width: 100 }}>{r.straw ? 'あり' : 'なし'}</div>
+                <div className="td" style={{ width: 200 }}>{r.straw ? (r.strawPdf || '-') : '-'}</div>
               </div>
             ))}
           </div>

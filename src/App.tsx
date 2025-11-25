@@ -4,10 +4,10 @@ import ShellLayout from './layouts/Shell';
 import Personal from './pages/Personal';
 import Group from './pages/Group';
 import Settings from './pages/Settings';
-import PackageSettings from './pages/settings/PackageSettings';
-import PackageList from './pages/settings/PackageList';
 import MarkSettings from './pages/settings/MarkSettings';
 import MarkList from './pages/settings/MarkList';
+import TextRuleList from './pages/settings/TextRuleList';
+import TextRuleSettings from './pages/settings/TextRuleSettings';
 import ResultDetail from './pages/ResultDetail';
 import BasePaper from './pages/settings/BasePaper';
 import BasePaperList from './pages/settings/BasePaperList';
@@ -41,19 +41,19 @@ export default function App() {
             <Route index element={<Group />} />
             <Route path=":id" element={<ResultDetail />} />
           </Route>
-          <Route path="/settings" element={<Settings />} >
-            <Route index element={<Navigate to="/settings/package" replace />} />
+            <Route path="/settings" element={<Settings />} >
+            <Route index element={<Navigate to="/settings/base" replace />} />
             <Route path="base" element={<BasePaper />} >
               <Route index element={<BasePaperList />} />
               <Route path="new" element={<BasePaperForm />} />
             </Route>
-            <Route path="package" >
-              <Route index element={<PackageList />} />
-              <Route path="new" element={<PackageSettings />} />
-            </Route>
             <Route path="mark" >
               <Route index element={<MarkList />} />
               <Route path="new" element={<MarkSettings />} />
+            </Route>
+            <Route path="text" >
+              <Route index element={<TextRuleList />} />
+              <Route path="new" element={<TextRuleSettings />} />
             </Route>
             {/* 工場制約は製品パッケージ登録に内包されたためタブ/ルートを削除 */}
           </Route>
