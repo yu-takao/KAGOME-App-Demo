@@ -12,9 +12,6 @@ import ResultDetail from './pages/ResultDetail';
 import BasePaper from './pages/settings/BasePaper';
 import BasePaperList from './pages/settings/BasePaperList';
 import BasePaperForm from './pages/settings/BasePaperForm';
-import FactoryConstraints from './pages/settings/FactoryConstraints';
-import FactoryConstraintsList from './pages/settings/FactoryConstraintsList';
-import FactoryConstraintsForm from './pages/settings/FactoryConstraintsForm';
 import NgDetail from './pages/NgDetail';
 function Placeholder({ title }: { title: string }) {
   return (
