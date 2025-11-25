@@ -96,6 +96,9 @@ export default function Personal() {
   useEffect(() => {
     (async () => {
       try {
+        // 事前に存在確認して、無ければ処理をスキップ（404ノイズ回避）
+        const head = await fetch(encodeURI('/検証項目ヒアリング.pdf'), { method: 'HEAD' });
+        if (!head.ok) return;
         const loadingTask = (pdfjsLib as any).getDocument(encodeURI('/検証項目ヒアリング.pdf'));
         const pdf = await loadingTask.promise;
         let text = '';
