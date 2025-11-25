@@ -57,8 +57,11 @@ export default function ImageColorPicker({ height = 240, onColorSelected, imageS
     const y = Math.floor(e.clientY - rect.top);
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const data = ctx.getImageData(x, y, 1, 1).data;
-    const picked = toHex(data[0], data[1], data[2]);
+    const data: Uint8ClampedArray = ctx.getImageData(x, y, 1, 1).data;
+    const r: number = data[0] ?? 0;
+    const g: number = data[1] ?? 0;
+    const b: number = data[2] ?? 0;
+    const picked = toHex(r, g, b);
     setHex(picked);
     onColorSelected?.(picked);
   };
