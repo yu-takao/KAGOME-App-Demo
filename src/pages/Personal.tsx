@@ -110,7 +110,7 @@ export default function Personal() {
         let currentFactory = '';
         for (const line of lines) {
           const facMatch = line.match(/^(.+?社)\b/);
-          if (facMatch) {
+          if (facMatch && facMatch[1]) {
             currentFactory = facMatch[1];
           }
           const pkgMatches = line.match(/\b\d{2,4}ml-[A-Za-z]\b/g);
