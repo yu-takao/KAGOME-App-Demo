@@ -205,7 +205,7 @@ export default function Personal() {
           const currentForIndicator = (() => {
             let idx = current;
             // 確認ステップ（非表示）にいる場合は一つ前の表示ステップをアクティブ表示
-            while (idx >= 0 && steps[idx] && steps[idx].key === 'confirm') idx--;
+            while (idx >= 0 && steps[idx]?.key === 'confirm') idx--;
             return Math.max(0, idx);
           })();
           return (
