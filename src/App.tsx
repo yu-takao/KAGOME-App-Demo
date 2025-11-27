@@ -8,6 +8,7 @@ import MarkSettings from './pages/settings/MarkSettings';
 import MarkList from './pages/settings/MarkList';
 import TextRuleList from './pages/settings/TextRuleList';
 import TextRuleSettings from './pages/settings/TextRuleSettings';
+import TextRuleCommonEdit from './pages/settings/TextRuleCommonEdit';
 import ResultDetail from './pages/ResultDetail';
 import BasePaper from './pages/settings/BasePaper';
 import BasePaperList from './pages/settings/BasePaperList';
@@ -38,7 +39,7 @@ export default function App() {
             <Route index element={<Group />} />
             <Route path=":id" element={<ResultDetail />} />
           </Route>
-            <Route path="/settings" element={<Settings />} >
+          <Route path="/settings" element={<Settings />} >
             <Route index element={<Navigate to="/settings/base" replace />} />
             <Route path="base" element={<BasePaper />} >
               <Route index element={<BasePaperList />} />
@@ -51,6 +52,7 @@ export default function App() {
             <Route path="text" >
               <Route index element={<TextRuleList />} />
               <Route path="new" element={<TextRuleSettings />} />
+              <Route path="common" element={<TextRuleCommonEdit />} />
             </Route>
             {/* 工場制約は製品パッケージ登録に内包されたためタブ/ルートを削除 */}
           </Route>

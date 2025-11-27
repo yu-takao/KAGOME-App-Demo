@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 
 export type Rect = { x: number; y: number; width: number; height: number } | null;
 
@@ -13,6 +13,7 @@ export default function RegionSelector({ height = 320, onChange, imageSrc }: Pro
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [rect, setRect] = useState<Rect>(null);
   const [imgSize, setImgSize] = useState<{ w: number; h: number } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const toLocal = (clientX: number, clientY: number) => {
     const el = containerRef.current!;
@@ -23,28 +24,45 @@ export default function RegionSelector({ height = 320, onChange, imageSrc }: Pro
   };
 
   const onMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (e.button !== 0) return; // 左クリックのみ
+    e.preventDefault();
     const p = toLocal(e.clientX, e.clientY);
+    dragStartRef.current = p;
     setDragStart(p);
     setRect({ x: p.x, y: p.y, width: 0, height: 0 });
   };
 
-  const onMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
+  useEffect(() => {
     if (!dragStart) return;
-    const el = containerRef.current!;
-    const bounds = el.getBoundingClientRect();
-    const p = toLocal(e.clientX, e.clientY);
-    const x = Math.min(dragStart.x, p.x);
-    const y = Math.min(dragStart.y, p.y);
-    const width = Math.abs(p.x - dragStart.x);
-    const height = Math.abs(p.y - dragStart.y);
-    const next = { x, y, width, height };
-    setRect(next);
-    onChange?.(next, { containerWidth: Math.round(bounds.width), containerHeight: Math.round(bounds.height) });
-  };
 
-  const onMouseUp: React.MouseEventHandler<HTMLDivElement> = () => {
-    setDragStart(null);
-  };
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!dragStartRef.current) return;
+      const el = containerRef.current;
+      if (!el) return;
+      const bounds = el.getBoundingClientRect();
+      const p = toLocal(e.clientX, e.clientY);
+      const x = Math.min(dragStartRef.current.x, p.x);
+      const y = Math.min(dragStartRef.current.y, p.y);
+      const width = Math.abs(p.x - dragStartRef.current.x);
+      const height = Math.abs(p.y - dragStartRef.current.y);
+      const next = { x, y, width, height };
+      setRect(next);
+      onChange?.(next, { containerWidth: Math.round(bounds.width), containerHeight: Math.round(bounds.height) });
+    };
+
+    const handleGlobalMouseUp = () => {
+      setDragStart(null);
+      dragStartRef.current = null;
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [dragStart, onChange]);
 
   const onDoubleClick: React.MouseEventHandler<HTMLDivElement> = () => {
     const el = containerRef.current!;
@@ -64,9 +82,6 @@ export default function RegionSelector({ height = 320, onChange, imageSrc }: Pro
         className="region-canvas"
         style={canvasStyle}
         onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseUp}
         onDoubleClick={onDoubleClick}
         title=""
       >

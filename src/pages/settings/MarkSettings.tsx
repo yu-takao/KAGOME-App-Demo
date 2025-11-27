@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PdfPreview from '../../components/PdfPreview';
 
@@ -24,10 +24,11 @@ export default function MarkSettings() {
   const [categories, setCategories] = useState<string[]>(['コーポレート', 'プロダクトブランド', 'マーク', '活動']);
   const [showNewCategory, setShowNewCategory] = useState<boolean>(false);
   const [newCategory, setNewCategory] = useState<string>('');
+  const markPdfFileInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <div>
-      <div className="card">
+      <div className="card scrollable" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
         <div className="form-row">
           <label className="form-label" htmlFor="markName">マーク名</label>
           <input id="markName" className="form-input" placeholder="マーク名を入力" value={markName} onChange={(e) => setMarkName(e.target.value)} />
@@ -49,6 +50,9 @@ export default function MarkSettings() {
               setMarkPdfUrl(url);
               setMarkPdfName(f.name);
             }}
+            onClick={() => {
+              if (!markPdfName) markPdfFileInputRef.current?.click();
+            }}
             style={{
               border: `2px dashed ${isDragOver ? 'var(--accent)' : 'var(--border)'}`,
               background: isDragOver ? '#f1ecff' : 'transparent',
@@ -56,9 +60,23 @@ export default function MarkSettings() {
               padding: 12,
               minHeight: 200,
               overflow: 'hidden',
+              cursor: markPdfName ? 'default' : 'pointer',
             }}
-            title="ここにマークPDFをドロップ"
+            title={markPdfName ? "ここにマークPDFをドロップ" : "クリックまたはドラッグアンドドロップでマークPDFを選択"}
           >
+            <input
+              ref={markPdfFileInputRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+              const f = e.target.files?.[0];
+                if (!f || f.type !== 'application/pdf') return;
+                const url = URL.createObjectURL(f);
+                setMarkPdfUrl(url);
+                setMarkPdfName(f.name);
+              }}
+            />
             {markPdfName ? (
               <div style={{ display: 'grid', placeItems: 'center', gap: 8 }}>
                 <PdfPreview src={markPdfUrl ?? `/pdfs/${encodeURIComponent(markPdfName)}`} maxWidth={300} maxHeight={160} />
@@ -67,25 +85,13 @@ export default function MarkSettings() {
                   <button
                     className="menu-item btn-small"
                     style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
-                    onClick={() => { setMarkPdfName(''); setMarkPdfUrl(null); }}
+                    onClick={(e) => { e.stopPropagation(); setMarkPdfName(''); setMarkPdfUrl(null); }}
                   >選択取消</button>
                 </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button
-                  className="menu-item btn-small"
-                  style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
-                  onClick={async () => {
-                    try {
-                      const res = await fetch('/api/pdfs');
-                      const data = await res.json();
-                      setPdfs(Array.isArray(data.files) ? data.files : []);
-                    } catch {}
-                    setShowPicker(true);
-                  }}
-                >フォルダを開く</button>
-                <span className="form-hint" style={{ margin: 0, whiteSpace: 'nowrap' }}>またはドラッグアンドドロップ</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <span className="form-hint" style={{ margin: 0, whiteSpace: 'nowrap' }}>ドラッグアンドドロップ</span>
               </div>
             )}
           </div>
@@ -215,7 +221,7 @@ export default function MarkSettings() {
             <div className="form-hint">server_pdfs フォルダ内のPDF</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                className="menu-item"
+                className="menu-item btn-small"
                 style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
                 onClick={async () => {
                   try {
@@ -226,7 +232,7 @@ export default function MarkSettings() {
                 }}
               >再読み込み</button>
               <button
-                className="menu-item"
+                className="menu-item btn-small"
                 style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
                 onClick={() => setShowPicker(false)}
               >閉じる</button>
@@ -247,10 +253,120 @@ export default function MarkSettings() {
         </div>
       )}
 
-      <div className="form-actions">
-        <button className="menu-item" onClick={() => alert('ダミー保存')}>保存</button>
-        <button className="menu-item" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}>クリア</button>
-        <button className="menu-item" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => navigate('/settings/mark')}>一覧に戻る</button>
+      <div className="form-actions" style={{ 
+        display: 'flex', 
+        gap: 12, 
+        marginTop: 16,
+        padding: '16px 0',
+        borderTop: '1px solid var(--border)',
+        justifyContent: 'flex-end',
+        position: 'sticky',
+        bottom: 0,
+        background: 'var(--bg)',
+        zIndex: 10
+      }}>
+        <button 
+          onClick={() => alert('ダミー登録')}
+          style={{
+            padding: '8px 16px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#ffffff',
+            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 4px 14px rgba(147, 51, 234, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(147, 51, 234, 0.35)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(147, 51, 234, 0.25)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >登録</button>
+        <button 
+          onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#64748b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f8fafc';
+            e.currentTarget.style.borderColor = '#cbd5e1';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#ffffff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >クリア</button>
+        <button 
+          onClick={() => navigate('/settings/mark')}
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#64748b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f8fafc';
+            e.currentTarget.style.borderColor = '#cbd5e1';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#ffffff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          一覧に戻る
+        </button>
       </div>
     </div>
   );

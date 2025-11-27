@@ -52,7 +52,7 @@ export default function PackageSettings() {
               <option value="CE">CE</option>
               <option value="ISO">ISO</option>
             </select>
-            <button className="menu-item" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => {
+            <button className="menu-item btn-small" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => {
               if (!markToAdd) return;
               if (marks.includes(markToAdd)) return;
               setMarks([...marks, markToAdd]);
@@ -78,7 +78,7 @@ export default function PackageSettings() {
           <label className="form-label">ストロー</label>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
-              className="menu-item"
+              className="menu-item btn-small"
               style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
               onClick={async () => {
                 try {
@@ -103,7 +103,7 @@ export default function PackageSettings() {
             <div className="form-hint">server_pdfs フォルダ内のPDF</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                className="menu-item"
+                className="menu-item btn-small"
                 style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
                 onClick={async () => {
                   try {
@@ -114,7 +114,7 @@ export default function PackageSettings() {
                 }}
               >再読み込み</button>
               <button
-                className="menu-item"
+                className="menu-item btn-small"
                 style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
                 onClick={() => setShowPicker(false)}
               >閉じる</button>
@@ -195,10 +195,116 @@ export default function PackageSettings() {
         )}
       </div>
 
-      <div className="form-actions">
-        <button className="menu-item" onClick={() => alert('ダミー保存')}>保存</button>
-        <button className="menu-item" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => { setProductName(''); setBasePaper(''); setMarks([]); setMarkToAdd(''); setStrawPdf(''); setPrintWidth(''); setPrintHeight(''); setJanWidth(''); setJanHeight(''); setBlackBan(''); }}>クリア</button>
-        <button className="menu-item" style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }} onClick={() => navigate('/settings/package')}>一覧に戻る</button>
+      <div className="form-actions" style={{ 
+        display: 'flex', 
+        gap: 12, 
+        marginTop: 24,
+        padding: '16px 0',
+        borderTop: '1px solid var(--border)',
+        justifyContent: 'flex-end'
+      }}>
+        <button 
+          onClick={() => alert('ダミー保存')}
+          style={{
+            padding: '8px 16px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#ffffff',
+            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 4px 14px rgba(147, 51, 234, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(147, 51, 234, 0.35)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(147, 51, 234, 0.25)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >保存</button>
+        <button 
+          onClick={() => { setProductName(''); setBasePaper(''); setMarks([]); setMarkToAdd(''); setStrawPdf(''); setPrintWidth(''); setPrintHeight(''); setJanWidth(''); setJanHeight(''); setBlackBan(''); setBlackAreaRect(null); setBlackAreaMeta(null); }}
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#64748b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f8fafc';
+            e.currentTarget.style.borderColor = '#cbd5e1';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#ffffff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >クリア</button>
+        <button 
+          onClick={() => navigate('/settings/package')}
+          style={{
+            padding: '8px 14px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#64748b',
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f8fafc';
+            e.currentTarget.style.borderColor = '#cbd5e1';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#ffffff';
+            e.currentTarget.style.borderColor = '#e2e8f0';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          一覧に戻る
+        </button>
       </div>
     </div>
   );

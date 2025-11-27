@@ -233,6 +233,39 @@ export default defineConfig({
             res.end(JSON.stringify({ error: 'Failed to list mout companies' }));
           }
         });
+
+        // Serve demo PDFs from data/demo/*
+        server.middlewares.use('/data/demo', (req, res, next) => {
+          try {
+            // req.url will be like '/KORE1_NG/design.pdf' when request is '/data/demo/KORE1_NG/design.pdf'
+            const reqPath = decodeURIComponent(req.url || '/');
+            // Remove leading slash
+            const cleanPath = reqPath.replace(/^\/+/, '');
+            const demoDir = path.join(process.cwd(), 'data', 'demo');
+            const filePath = path.join(demoDir, cleanPath);
+            console.log('Demo PDF request:', { reqUrl: req.url, cleanPath, filePath, exists: fs.existsSync(filePath) });
+            if (!filePath.startsWith(demoDir)) {
+              res.statusCode = 403;
+              return res.end('Forbidden');
+            }
+            if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+              console.error('File not found:', filePath);
+              res.statusCode = 404;
+              return res.end('Not Found');
+            }
+            const ext = path.extname(filePath).toLowerCase();
+            if (ext === '.pdf') {
+              res.setHeader('Content-Type', 'application/pdf');
+            } else {
+              res.setHeader('Content-Type', 'application/octet-stream');
+            }
+            fs.createReadStream(filePath).pipe(res);
+          } catch (e) {
+            console.error('Demo PDF server error:', e);
+            res.statusCode = 500;
+            res.end('Server Error');
+          }
+        });
       },
     },
   ],

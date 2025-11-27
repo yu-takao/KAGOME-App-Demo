@@ -33,7 +33,7 @@ export default function PdfPreview({ src, maxWidth = 220, maxHeight = 160 }: Pro
         setDim({ w, h });
         await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
       } catch (e) {
-        // noop for mock
+        console.error('PdfPreview error:', e, 'src:', src);
       }
     })();
     return () => { destroyed = true; };

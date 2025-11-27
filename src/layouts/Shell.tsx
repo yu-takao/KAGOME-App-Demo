@@ -9,9 +9,9 @@ export default function ShellLayout() {
           <img src="/webDesign/KAGOME.png" alt="KAGOME" style={{ width: '70%', height: 'auto', display: 'block', margin: '0 auto' }} />
         </div>
         <nav className="menu">
-          <NavLink to="/personal" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>検査実行</NavLink>
-          <NavLink to="/group" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>検査記録</NavLink>
-          <NavLink to="/settings" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>設定登録</NavLink>
+          <NavLink to="/personal" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>デザイン検査</NavLink>
+          <NavLink to="/group" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`} style={{ fontSize: '0.9em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ marginRight: 6 }}>☰</span>検査記録</NavLink>
+          <NavLink to="/settings" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`} style={{ fontSize: '0.9em', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ marginRight: 6 }}>⚙</span>設定登録</NavLink>
         </nav>
       </aside>
       <main className="content">

@@ -13,10 +13,10 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
-body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "YuGothic", "Meiryo", sans-serif; }
+body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "YuGothic", "Meiryo", sans-serif; overflow: hidden; }
 
 .app-root { height: 100%; display: grid; place-items: center; }
-.app-with-sidebar { display: grid; grid-template-columns: 300px 1fr; place-items: stretch; }
+.app-with-sidebar { display: grid; grid-template-columns: 270px 1fr; place-items: stretch; }
 
 .brand-logo {
   position: fixed;
@@ -57,15 +57,15 @@ body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%
   text-overflow: ellipsis;
   text-align: center;
 }
-.side-link:hover { background: #f1ecff; }
+.side-link:hover { background: #f5f5f5; }
 .side-link:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
-.side-link.active { background: var(--accent-strong); color: #ffffff; box-shadow: var(--shadow-md); }
+.side-link.active { background: #374151; color: #ffffff; box-shadow: var(--shadow-md); }
 
 /* タブ（設定ページ上部） */
 .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin: 8px 0 16px; }
-.tab-link { display: inline-block; padding: 10px 14px; border-radius: 10px 10px 0 0; text-decoration: none; color: var(--text); border: 1px solid transparent; }
-.tab-link:hover { background: #f1ecff; }
-.tab-link.active { background: var(--accent-strong); color: #ffffff; border-color: var(--accent-strong); }
+.tab-link { display: inline-block; padding: 10px 14px; border-radius: 10px 10px 0 0; text-decoration: none; color: var(--text); border: 1px solid transparent; font-size: 0.9em; }
+.tab-link:hover { background: #f5f5f5; }
+.tab-link.active { background: #374151; color: #ffffff; border-color: #374151; }
 .tab-panel { padding: 8px 0; }
 
 /* カード・フォーム */
@@ -79,7 +79,7 @@ body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%
 .form-input.half { width: 50%; max-width: 220px; }
 .form-input:focus, .form-select:focus { outline: none; box-shadow: 0 0 0 3px var(--ring); border-color: var(--accent); }
 .form-hint { color: var(--muted); font-size: 12px; }
-.form-actions { display: flex; gap: 12px; margin-top: 16px; }
+.form-actions { display: flex; gap: 12px; margin-top: 16px; justify-content: flex-end; }
 .control-offset { margin-left: 16px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; background: #f1ecff; border: 1px solid var(--border); color: var(--text); border-radius: 999px; }
@@ -109,9 +109,76 @@ body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%
 .tbody .tr:hover { background: #fbfdff; }
 .tbody .tr.clickable { cursor: pointer; }
 
+/* 検査記録と設定登録の一覧では、ボタン以外のホバーエフェクトを無効化 */
+.settings-container .tbody .tr:hover,
+.group-container .tbody .tr:hover {
+  background: transparent;
+}
+
+/* 展開アニメーション */
+@keyframes expandRow {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+  }
+}
+
+@keyframes collapseRow {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+}
+
+.group-container .tbody .tr.expand-row {
+  animation: expandRow 0.3s ease-out forwards;
+  overflow: hidden;
+}
+
+.group-container .tbody .tr.expand-row.collapse-row {
+  animation: collapseRow 0.3s ease-out forwards;
+}
+
 /* 検査結果: 合否の表示色 */
 .results .result-pass { color: #059669; font-weight: 700; }
 .results .result-fail { color: #dc2626; font-weight: 700; }
+
+/* 合否バッジ（モダンなデザイン） */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  width: 60px;
+  text-align: center;
+}
+
+.status-badge.status-pass {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.status-fail {
+  background: #e5e7eb;
+  color: #6b7280;
+}
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--border); vertical-align: -2px; }
 .color-picker-canvas { margin: 8px 0; }
 
@@ -136,18 +203,27 @@ body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%
 .steps { display: grid; grid-template-columns: repeat(5, 1fr); --steps-gap: 8px; gap: var(--steps-gap); align-items: center; }
 .step { position: relative; display: grid; grid-template-columns: 24px max-content 1fr; align-items: center; gap: 6px; }
 .step-badge { width: 24px; height: 24px; border-radius: 9999px; display: grid; place-items: center; background: #e5e7eb; color: #111827; font-weight: 800; font-size: 12px; }
-.step-title { font-weight: 700; color: var(--text); font-size: 14px; }
+.step-title { font-weight: 700; color: var(--text); font-size: 0.9em; }
 .step-connector { grid-column: 3; position: relative; height: 2px; background: #e5e7eb; align-self: center; }
 .step-connector::after { content: ''; position: absolute; left: 100%; top: 0; width: var(--steps-gap); height: 2px; background: #e5e7eb; }
 .step.active .step-badge { background: var(--accent); color: #fff; }
 .step.completed .step-badge { background: #059669; color: #fff; }
 .wizard-panel { margin-top: 8px; }
+.wizard-panel.card { max-height: calc(100vh - 220px); overflow: auto; }
 .wizard-nav { display: flex; gap: 12px; justify-content: flex-end; margin-top: 12px; }
+.wizard-nav.data-input-nav .menu-item.btn-small {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.data-input-form .form-label,
+.confirm-form .form-label { font-size: 0.9em; }
+.card.scrollable.data-input-panel { margin-bottom: 0; }
 
-.content { height: 100%; width: 100%; display: grid; align-items: start; }
-.content-inner { padding: 28px; }
+.content { height: 100vh; width: 100%; display: grid; align-items: start; overflow: hidden; }
+.content-inner { padding: 28px; height: 100%; overflow: hidden; }
 
 .menu-container { width: 100%; max-width: 560px; padding: 28px; }
+.card.scrollable { max-height: calc(100vh - 120px); overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
 .app-title { text-align: center; font-size: 30px; line-height: 1.15; margin: 0 0 18px; font-weight: 800; letter-spacing: 0.2px; }
 .app-subtitle { text-align: center; margin: 0 0 22px; color: var(--muted); font-size: 14px; }
 
@@ -171,13 +247,70 @@ body { margin: 0; background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%
 /* 小型ボタンバリアント */
 .menu-item.btn-small { padding: 10px 12px; font-size: 14px; border-radius: 10px; }
 
-/* アイコン風の装飾（任意） */
-.menu-item::after {
-  content: '›';
-  float: right;
-  opacity: .85;
-  color: rgba(255, 255, 255, 0.85);
+/* 設定登録画面と検査記録画面のボタン（黒系）のサイズとホバー効果 */
+.settings-container .menu-item.btn-small,
+.group-container .menu-item.btn-small {
+  padding: 8px 10px;
+  font-size: 13px;
 }
+.settings-container .menu-item.btn-small[style*="background: #4b5563"]:hover,
+.settings-container .menu-item.btn-small[style*="background:#4b5563"]:hover,
+.group-container .menu-item.btn-small[style*="background: #4b5563"]:hover,
+.group-container .menu-item.btn-small[style*="background:#4b5563"]:hover {
+  background: #374151 !important;
+  border-color: #374151 !important;
+}
+
+/* プルダウンの点滅アニメーション */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.3),
+                0 0 0 6px rgba(147, 51, 234, 0.15),
+                0 0 25px rgba(147, 51, 234, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(147, 51, 234, 0.5),
+                0 0 0 10px rgba(147, 51, 234, 0.25),
+                0 0 40px rgba(147, 51, 234, 0.4);
+  }
+}
+
+@keyframes border-pulse {
+  0%, 100% {
+    border-color: #9333ea;
+  }
+  50% {
+    border-color: #c084fc;
+  }
+}
+
+@keyframes background-pulse {
+  0%, 100% {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  }
+  50% {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  }
+}
+
+.pulse-select {
+  animation: pulse-glow 1.5s ease-in-out infinite, 
+             border-pulse 1.5s ease-in-out infinite,
+             background-pulse 1.5s ease-in-out infinite;
+  position: relative;
+}
+
+/* 設定登録画面の各項目のフォントサイズをボタンに合わせる */
+.settings-container .form-label,
+.settings-container .form-input,
+.settings-container .form-select,
+.settings-container .form-hint,
+.settings-container .radio span,
+.settings-container .chip {
+  font-size: 13px;
+}
+
+/* アイコン装飾を無効化（不要な矢印を表示しない） */
 
 
 

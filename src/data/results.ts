@@ -108,10 +108,13 @@ function treeWithFails(): CheckItem[] {
 }
 
 export const RESULTS: ResultRecord[] = [
-  { id: 'R-004', at: '2025-10-21 10:15', packageName: 'パッケージB', executor: '田中', tree: treeAllPass() },
-  { id: 'R-003', at: '2025-10-21 09:40', packageName: 'パッケージA', executor: '佐藤', tree: treeWithFails() },
-  { id: 'R-002', at: '2025-10-20 16:05', packageName: 'パッケージC', executor: '鈴木', tree: treeAllPass() },
-  { id: 'R-001', at: '2025-10-20 15:20', packageName: 'パッケージD', executor: '山田', tree: treeWithFails() },
+  { id: 'PKG-001', at: '2025-10-21 10:15', packageName: 'パッケージB', executor: '田中', tree: treeAllPass() },
+  { id: 'PKG-001', at: '2025-10-21 09:30', packageName: 'パッケージB', executor: '田中', tree: treeWithFails() },
+  { id: 'PKG-001', at: '2025-10-20 14:20', packageName: 'パッケージB', executor: '佐藤', tree: treeAllPass() },
+  { id: 'PKG-002', at: '2025-10-21 09:40', packageName: 'パッケージA', executor: '佐藤', tree: treeWithFails() },
+  { id: 'PKG-002', at: '2025-10-20 16:00', packageName: 'パッケージA', executor: '鈴木', tree: treeAllPass() },
+  { id: 'PKG-003', at: '2025-10-20 16:05', packageName: 'パッケージC', executor: '鈴木', tree: treeAllPass() },
+  { id: 'PKG-004', at: '2025-10-20 15:20', packageName: 'パッケージD', executor: '山田', tree: treeWithFails() },
 ];
 
 export function getResults() {
@@ -124,9 +127,25 @@ export function getResults() {
   }));
 }
 
-export function getResultTree(id: string | undefined): CheckItem[] {
-  const hit = RESULTS.find(r => r.id === id);
+export function getResultTree(id: string | undefined, at?: string): CheckItem[] {
+  if (!id) return treeWithFails();
+  if (at) {
+    const hit = RESULTS.find(r => r.id === id && r.at === at);
   return hit ? hit.tree : treeWithFails();
+  }
+  // IDのみの場合は最新の1つを返す
+  const hits = RESULTS.filter(r => r.id === id);
+  if (hits.length > 0) {
+    hits.sort((a, b) => toTime(b.at) - toTime(a.at));
+    return hits[0].tree;
+  }
+  return treeWithFails();
+}
+
+function toTime(at: string): number {
+  const iso = at.replace(' ', 'T') + ':00';
+  const t = Date.parse(iso);
+  return isNaN(t) ? 0 : t;
 }
 
 
