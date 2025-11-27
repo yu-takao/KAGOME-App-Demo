@@ -2,6 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+export const config = {
+  api: {
+    bodyParser: false,
+    responseLimit: false,
+  },
+};
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const baseDir = path.join(process.cwd(), 'server_pdfs');
@@ -16,7 +23,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       res.status(404).end('Not Found');
       return;
     }
+    const stats = fs.statSync(filePath);
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', stats.size);
     fs.createReadStream(filePath).pipe(res);
   } catch (e) {
     res.status(500).end('Server Error');

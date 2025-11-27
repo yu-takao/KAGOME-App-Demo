@@ -2,6 +2,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import fs from 'fs';
 import path from 'path';
 
+export const config = {
+  api: {
+    bodyParser: false,
+    responseLimit: false,
+  },
+};
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const parts = Array.isArray(req.query.path) ? req.query.path : [req.query.path].filter(Boolean) as string[];
@@ -18,12 +25,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(404).end('Not Found');
     }
     
+    const stats = fs.statSync(fullPath);
     const ext = path.extname(fullPath).toLowerCase();
     if (ext === '.pdf') {
       res.setHeader('Content-Type', 'application/pdf');
     } else {
       res.setHeader('Content-Type', 'application/octet-stream');
     }
+    res.setHeader('Content-Length', stats.size);
     
     fs.createReadStream(fullPath).pipe(res);
   } catch (e) {
