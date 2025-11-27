@@ -91,6 +91,7 @@ export default function Group() {
         seenIds.add(r.id);
         const records = grouped.get(r.id) || [];
         const [first, ...rest] = records;
+        if (!first) return; // firstが存在しない場合はスキップ
         const isExpanded = expandedIds.has(r.id);
         const isCollapsing = collapsingIds.has(r.id);
         list.push({
