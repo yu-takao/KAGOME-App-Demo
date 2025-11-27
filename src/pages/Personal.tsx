@@ -466,20 +466,16 @@ export default function Personal() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
-                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
                       onDragLeave={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
                       onDrop={(e) => {
                         e.preventDefault();
                         setIsDragOverNone(false);
-                        const f = e.dataTransfer.files?.[0];
-                        if (!f || f.type !== 'application/pdf') return;
-                        const url = URL.createObjectURL(f);
-                        setPdfNoneUrl(url);
-                        setPdfNone(f.name);
+                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                       }}
                       onClick={() => {
-                        if (!pdfNone) pdfNoneFileInputRef.current?.click();
+                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                       }}
                       style={{
                         border: `2px dashed ${isDragOverNone ? 'var(--accent)' : 'var(--border)'}`,
@@ -488,21 +484,19 @@ export default function Personal() {
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: pdfNone ? 'default' : 'pointer',
+                        cursor: pdfNone ? 'default' : 'not-allowed',
+                        opacity: pdfNone ? 1 : 0.6,
                       }}
-                      title={pdfNone ? "ここに版下PDFをドロップ" : "クリックまたはドラッグアンドドロップで版下PDFを選択"}
+                      title={pdfNone ? "ここに版下PDFをドロップ" : "デモ用データセットから選択してください"}
                     >
                       <input
                         ref={pdfNoneFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
+                        disabled
                         onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (!f || f.type !== 'application/pdf') return;
-                          const url = URL.createObjectURL(f);
-                          setPdfNoneUrl(url);
-                          setPdfNone(f.name);
+                          // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                         }}
                       />
                       <div className="form-label nowrap" style={{ marginBottom: 6 }}>版下PDF<span className="label-note">*包材制約表示なし</span></div>
@@ -525,20 +519,16 @@ export default function Personal() {
                       )}
                     </div>
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
-                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
                       onDragLeave={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
                       onDrop={(e) => {
                         e.preventDefault();
                         setIsDragOverConstraint(false);
-                        const f = e.dataTransfer.files?.[0];
-                        if (!f || f.type !== 'application/pdf') return;
-                        const url = URL.createObjectURL(f);
-                        setPdfConstraintUrl(url);
-                        setPdfConstraint(f.name);
+                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                       }}
                       onClick={() => {
-                        if (!pdfConstraint) pdfConstraintFileInputRef.current?.click();
+                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                       }}
                       style={{
                         border: `2px dashed ${isDragOverConstraint ? 'var(--accent)' : 'var(--border)'}`,
@@ -547,21 +537,19 @@ export default function Personal() {
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: pdfConstraint ? 'default' : 'pointer',
+                        cursor: pdfConstraint ? 'default' : 'not-allowed',
+                        opacity: pdfConstraint ? 1 : 0.6,
                       }}
-                      title={pdfConstraint ? "ここに台紙PDFをドロップ" : "クリックまたはドラッグアンドドロップで台紙PDFを選択"}
+                      title={pdfConstraint ? "ここに台紙PDFをドロップ" : "デモ用データセットから選択してください"}
                     >
                       <input
                         ref={pdfConstraintFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
+                        disabled
                         onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (!f || f.type !== 'application/pdf') return;
-                          const url = URL.createObjectURL(f);
-                          setPdfConstraintUrl(url);
-                          setPdfConstraint(f.name);
+                          // PDF選択は無効化（デモ用データセットからの選択のみ有効）
                         }}
                       />
                       <div className="form-label" style={{ marginBottom: 6 }}>台紙PDF</div>
