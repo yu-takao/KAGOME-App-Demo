@@ -81,9 +81,9 @@ export default function ResultDetail() {
                   <div style={{ display: 'grid', placeItems: 'center' }}>
                     <div style={{ width: 20, height: 20, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 10 }}>1</div>
                   </div>
-                  <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/mark1.png')}>
+                  <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/api/outputs/ng/mark1.png')}>
                     <img
-                      src="/outputs/ng/mark1.png"
+                      src="/api/outputs/ng/mark1.png"
                       alt="NG1"
                       style={{ width: 100, height: 64, objectFit: 'contain', display: 'block' }}
                     />
@@ -99,9 +99,9 @@ export default function ResultDetail() {
                   <div style={{ display: 'grid', placeItems: 'center' }}>
                     <div style={{ width: 20, height: 20, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 10 }}>2</div>
                   </div>
-                  <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/text1.png')}>
+                  <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/api/outputs/ng/text1.png')}>
                     <img
-                      src="/outputs/ng/text1.png"
+                      src="/api/outputs/ng/text1.png"
                       alt="NG2"
                       style={{ width: 100, height: 64, objectFit: 'contain', display: 'block' }}
                     />
@@ -114,9 +114,9 @@ export default function ResultDetail() {
               </div>
             </div>
           </div>
-        <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/mark_text_NG_highlight1.png')}>
+        <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/api/outputs/mark_text_NG_highlight1.png')}>
           <img
-            src="/outputs/mark_text_NG_highlight1.png"
+            src="/api/outputs/mark_text_NG_highlight1.png"
             alt="結果表示"
               style={{ width: '100%', maxWidth: 476, maxHeight: 286, height: 'auto', display: 'block', objectFit: 'contain' }}
           />

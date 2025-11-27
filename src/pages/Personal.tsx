@@ -466,30 +466,57 @@ export default function Personal() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
                     <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragOverNone(false);
+                        const f = e.dataTransfer.files?.[0];
+                        if (!f || f.type !== 'application/pdf') return;
+                        const url = URL.createObjectURL(f);
+                        setPdfNoneUrl(url);
+                        setPdfNone(f.name);
+                      }}
+                      onClick={() => {
+                        if (!pdfNone) pdfNoneFileInputRef.current?.click();
+                      }}
                       style={{
-                        border: '2px dashed var(--border)',
-                        background: '#f3f4f6',
+                        border: `2px dashed ${isDragOverNone ? 'var(--accent)' : 'var(--border)'}`,
+                        background: isDragOverNone ? '#f1ecff' : (pdfNone ? '#fff' : '#f3f4f6'),
                         borderRadius: 10,
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: 'not-allowed',
-                        opacity: 0.6,
-                        pointerEvents: 'none'
+                        cursor: pdfNone ? 'default' : 'pointer',
                       }}
+                      title={pdfNone ? "ここに版下PDFをドロップ" : "クリックまたはドラッグアンドドロップで版下PDFを選択"}
                     >
                       <input
                         ref={pdfNoneFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
-                        disabled
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f || f.type !== 'application/pdf') return;
+                          const url = URL.createObjectURL(f);
+                          setPdfNoneUrl(url);
+                          setPdfNone(f.name);
+                        }}
                       />
                       <div className="form-label nowrap" style={{ marginBottom: 6 }}>版下PDF<span className="label-note">*包材制約表示なし</span></div>
                       {pdfNone ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, pointerEvents: 'auto', opacity: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                           <PdfPreview src={pdfNoneUrl ?? `/pdfs/${encodeURIComponent(pdfNone)}`} maxWidth={360} maxHeight={192} />
-                          <div className="form-hint" style={{ margin: 0, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pdfNone}</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                            <div className="form-hint" style={{ margin: 0, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pdfNone}</div>
+                            <button
+                              className="menu-item btn-small"
+                              style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
+                              onClick={(e) => { e.stopPropagation(); setPdfNone(''); setPdfNoneUrl(null); }}
+                            >選択取消</button>
+                          </div>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -498,30 +525,57 @@ export default function Personal() {
                       )}
                     </div>
                     <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
+                      onDragLeave={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragOverConstraint(false);
+                        const f = e.dataTransfer.files?.[0];
+                        if (!f || f.type !== 'application/pdf') return;
+                        const url = URL.createObjectURL(f);
+                        setPdfConstraintUrl(url);
+                        setPdfConstraint(f.name);
+                      }}
+                      onClick={() => {
+                        if (!pdfConstraint) pdfConstraintFileInputRef.current?.click();
+                      }}
                       style={{
-                        border: '2px dashed var(--border)',
-                        background: '#f3f4f6',
+                        border: `2px dashed ${isDragOverConstraint ? 'var(--accent)' : 'var(--border)'}`,
+                        background: isDragOverConstraint ? '#f1ecff' : (pdfConstraint ? '#fff' : '#f3f4f6'),
                         borderRadius: 10,
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: 'not-allowed',
-                        opacity: 0.6,
-                        pointerEvents: 'none'
+                        cursor: pdfConstraint ? 'default' : 'pointer',
                       }}
+                      title={pdfConstraint ? "ここに台紙PDFをドロップ" : "クリックまたはドラッグアンドドロップで台紙PDFを選択"}
                     >
                       <input
                         ref={pdfConstraintFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
-                        disabled
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (!f || f.type !== 'application/pdf') return;
+                          const url = URL.createObjectURL(f);
+                          setPdfConstraintUrl(url);
+                          setPdfConstraint(f.name);
+                        }}
                       />
                       <div className="form-label" style={{ marginBottom: 6 }}>台紙PDF</div>
                       {pdfConstraint ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, pointerEvents: 'auto', opacity: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                           <PdfPreview src={pdfConstraintUrl ?? `/pdfs/${encodeURIComponent(pdfConstraint)}`} maxWidth={360} maxHeight={192} />
-                          <div className="form-hint" style={{ margin: 0, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pdfConstraint}</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+                            <div className="form-hint" style={{ margin: 0, maxWidth: 260, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pdfConstraint}</div>
+                            <button
+                              className="menu-item btn-small"
+                              style={{ background: '#fff', color: 'var(--text)', borderColor: 'var(--border)' }}
+                              onClick={(e) => { e.stopPropagation(); setPdfConstraint(''); setPdfConstraintUrl(null); }}
+                            >選択取消</button>
+                          </div>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
@@ -1083,7 +1137,7 @@ export default function Personal() {
                     >
                       <img
                         ref={visualImageRef}
-                        src="/outputs/checkRequiredArea.png"
+                        src="/api/outputs/checkRequiredArea.png"
                         alt="チェック結果"
                         style={{
                           width: `${100 * visualZoom}%`,
@@ -1614,9 +1668,9 @@ export default function Personal() {
                           <div style={{ display: 'grid', placeItems: 'center' }}>
                             <div style={{ width: 18, height: 18, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 9 }}>1</div>
                           </div>
-                          <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/mark1.png')}>
+                          <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/api/outputs/ng/mark1.png')}>
                             <img
-                              src="/outputs/ng/mark1.png"
+                              src="/api/outputs/ng/mark1.png"
                               alt="NG1"
                               style={{ width: 64, height: 40, objectFit: 'contain', display: 'block' }}
                             />
@@ -1633,9 +1687,9 @@ export default function Personal() {
                           <div style={{ display: 'grid', placeItems: 'center' }}>
                             <div style={{ width: 18, height: 18, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 9 }}>2</div>
                           </div>
-                          <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/text1.png')}>
+                          <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/api/outputs/ng/text1.png')}>
                             <img
-                              src="/outputs/ng/text1.png"
+                              src="/api/outputs/ng/text1.png"
                               alt="NG2"
                               style={{ width: 64, height: 40, objectFit: 'contain', display: 'block' }}
                             />
@@ -1681,7 +1735,7 @@ export default function Personal() {
                   <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
                     <img
                       ref={resultImageRef}
-                      src="/outputs/mark_text_NG_highlight1.png"
+                      src="/api/outputs/mark_text_NG_highlight1.png"
                       alt="結果表示"
                       style={{ width: '100%', maxWidth: 381, maxHeight: 229, height: 'auto', display: 'block', objectFit: 'contain' }}
                       onLoad={() => {

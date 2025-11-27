@@ -16,7 +16,15 @@ export default function PdfPreview({ src, maxWidth = 220, maxHeight = 160 }: Pro
     let destroyed = false;
     (async () => {
       try {
-        const loadingTask = (pdfjsLib as any).getDocument(src);
+        // blob URLの場合はそのまま使用、それ以外は通常のURLとして処理
+        let loadingTask;
+        if (src.startsWith('blob:')) {
+          // blob URLの場合はそのまま使用
+          loadingTask = (pdfjsLib as any).getDocument({ url: src });
+        } else {
+          // 通常のURLの場合
+          loadingTask = (pdfjsLib as any).getDocument(src);
+        }
         const pdf = await loadingTask.promise;
         if (destroyed) return;
         const page = await pdf.getPage(1);
@@ -25,6 +33,7 @@ export default function PdfPreview({ src, maxWidth = 220, maxHeight = 160 }: Pro
         const scale = Math.min(maxWidth / viewport.width, maxHeight / viewport.height);
         const scaledViewport = page.getViewport({ scale });
         const canvas = canvasRef.current!;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d')!;
         const w = Math.round(scaledViewport.width);
         const h = Math.round(scaledViewport.height);
