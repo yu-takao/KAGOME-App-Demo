@@ -137,7 +137,10 @@ export function getResultTree(id: string | undefined, at?: string): CheckItem[] 
   const hits = RESULTS.filter(r => r.id === id);
   if (hits.length > 0) {
     hits.sort((a, b) => toTime(b.at) - toTime(a.at));
-    return hits[0].tree;
+    const firstHit = hits[0];
+    if (firstHit) {
+      return firstHit.tree;
+    }
   }
   return treeWithFails();
 }
