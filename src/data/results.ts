@@ -108,13 +108,7 @@ function treeWithFails(): CheckItem[] {
 }
 
 export const RESULTS: ResultRecord[] = [
-  { id: 'PKG-001', at: '2025-10-21 10:15', packageName: 'パッケージB', executor: '田中', tree: treeAllPass() },
-  { id: 'PKG-001', at: '2025-10-21 09:30', packageName: 'パッケージB', executor: '田中', tree: treeWithFails() },
-  { id: 'PKG-001', at: '2025-10-20 14:20', packageName: 'パッケージB', executor: '佐藤', tree: treeAllPass() },
-  { id: 'PKG-002', at: '2025-10-21 09:40', packageName: 'パッケージA', executor: '佐藤', tree: treeWithFails() },
-  { id: 'PKG-002', at: '2025-10-20 16:00', packageName: 'パッケージA', executor: '鈴木', tree: treeAllPass() },
-  { id: 'PKG-003', at: '2025-10-20 16:05', packageName: 'パッケージC', executor: '鈴木', tree: treeAllPass() },
-  { id: 'PKG-004', at: '2025-10-20 15:20', packageName: 'パッケージD', executor: '山田', tree: treeWithFails() },
+  { id: 'PKG-001', at: '2025-10-21 10:15', packageName: '野菜一日これ一本 200ml', executor: '田中', tree: treeWithFails() },
 ];
 
 export function getResults() {

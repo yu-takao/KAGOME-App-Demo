@@ -41,14 +41,18 @@ export default function Personal() {
   const [pendingRect, setPendingRect] = useState<Rect>(null);
   const [runProgress, setRunProgress] = useState<number>(0);
   const [visualZoom, setVisualZoom] = useState<number>(1);
-  const [visualAnnotations, setVisualAnnotations] = useState<{ id: number; rect: { xPct: number; yPct: number; wPct: number; hPct: number }; comment: string; status: 'ok' | 'ng' }[]>([]);
-  const [visualDraftRect, setVisualDraftRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [visualMode, setVisualMode] = useState<'pan' | 'select'>('select');
+  const [visualImagePosition, setVisualImagePosition] = useState({ x: 0, y: 0 });
+  const [visualIsDragging, setVisualIsDragging] = useState(false);
+  const visualDragStartRef = useRef({ x: 0, y: 0 });
+  const visualImageRef = useRef<HTMLImageElement | null>(null);
+  const [visualAnnotations, setVisualAnnotations] = useState<{ id: number; rect: { xPct: number; yPct: number; wPct: number; hPct: number }; comment: string; thumbnail?: string; visualImageNaturalWidth?: number; visualImageNaturalHeight?: number }[]>([]);
+  const [visualDraftRect, setVisualDraftRect] = useState<{ x: number; y: number; width: number; height: number; imgX?: number; imgY?: number; imgW?: number; imgH?: number } | null>(null);
   const [visualCommentDraft, setVisualCommentDraft] = useState<string>('');
   const [visualSelectedId, setVisualSelectedId] = useState<number | null>(null);
   const visualCanvasRef = useRef<HTMLDivElement | null>(null);
   const visualDraftStartRef = useRef<{ x: number; y: number } | null>(null);
   const [checkOpen, setCheckOpen] = useState<boolean[]>([false, false, false, false, false]);
-  const [visualDraftStatus, setVisualDraftStatus] = useState<'ok' | 'ng'>('ng');
   type SelectedMark = { name: string; category: string; url: string };
   const [selectedMarks, setSelectedMarks] = useState<SelectedMark[]>([]);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
@@ -57,6 +61,8 @@ export default function Personal() {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
+  const resultImageRef = useRef<HTMLImageElement>(null);
+  const [resultImageLoaded, setResultImageLoaded] = useState<boolean>(false);
   const [markCategory, setMarkCategory] = useState<string>('');
   const [catalogFiles, setCatalogFiles] = useState<{ name: string; url: string }[]>([]);
   const [moutFiles, setMoutFiles] = useState<{ name: string; url: string }[]>([]);
@@ -190,21 +196,90 @@ export default function Personal() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousInspection, factory, moutFiles]);
 
-  // 目視チェック画面の領域選択ドラッグ処理
+  // 目視チェック画面の拡大縮小・ドラッグ処理
   useEffect(() => {
-    if (!visualDraftRect || !visualDraftStartRef.current) return;
+    if (!visualIsDragging || visualMode !== 'pan') return;
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      setVisualImagePosition({
+        x: e.clientX - visualDragStartRef.current.x,
+        y: e.clientY - visualDragStartRef.current.y
+      });
+    };
+    
+    const handleGlobalMouseUp = () => {
+      setVisualIsDragging(false);
+    };
+    
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [visualIsDragging, visualMode]);
+
+  // 目視チェック画面の領域選択ドラッグ処理（画像座標系）
+  useEffect(() => {
+    if (!visualDraftRect || !visualDraftStartRef.current || visualMode !== 'select') return;
 
     const handleGlobalMouseMove = (e: MouseEvent) => {
       const el = visualCanvasRef.current;
-      if (!el || !visualDraftStartRef.current) return;
-      const r = el.getBoundingClientRect();
-      const cx = Math.min(Math.max(0, e.clientX - r.left), r.width);
-      const cy = Math.min(Math.max(0, e.clientY - r.top), r.height);
-      const x = Math.min(visualDraftStartRef.current.x, cx);
-      const y = Math.min(visualDraftStartRef.current.y, cy);
-      const width = Math.abs(cx - visualDraftStartRef.current.x);
-      const height = Math.abs(cy - visualDraftStartRef.current.y);
-      setVisualDraftRect({ x, y, width, height });
+      const img = visualImageRef.current;
+      if (!el || !img || !visualDraftStartRef.current || !img.naturalWidth || !img.naturalHeight) return;
+      
+      const canvasRect = el.getBoundingClientRect();
+      const canvasX = e.clientX - canvasRect.left;
+      const canvasY = e.clientY - canvasRect.top;
+      const canvasWidth = canvasRect.width;
+      const canvasHeight = canvasRect.height;
+      
+      // 画像の元のサイズとアスペクト比
+      const imgNaturalWidth = img.naturalWidth;
+      const imgNaturalHeight = img.naturalHeight;
+      const imgAspectRatio = imgNaturalWidth / imgNaturalHeight;
+      const canvasAspectRatio = canvasWidth / canvasHeight;
+      
+      // objectFit: containを考慮した画像の実際の表示サイズを計算
+      let imgDisplayWidth: number;
+      let imgDisplayHeight: number;
+      if (imgAspectRatio > canvasAspectRatio) {
+        // 画像が横長の場合、幅に合わせる
+        imgDisplayWidth = canvasWidth * visualZoom;
+        imgDisplayHeight = (canvasWidth / imgAspectRatio) * visualZoom;
+      } else {
+        // 画像が縦長の場合、高さに合わせる
+        imgDisplayHeight = canvasHeight * visualZoom;
+        imgDisplayWidth = (canvasHeight * imgAspectRatio) * visualZoom;
+      }
+      
+      // 画像の中心位置（キャンバス座標）
+      const imgCenterX = canvasWidth / 2;
+      const imgCenterY = canvasHeight / 2;
+      
+      // 画像の左上位置（キャンバス座標、transformを考慮）
+      const imgLeft = imgCenterX - imgDisplayWidth / 2 + visualImagePosition.x;
+      const imgTop = imgCenterY - imgDisplayHeight / 2 + visualImagePosition.y;
+      
+      // キャンバス座標を画像座標（0-1の範囲）に変換
+      const imgX1 = (visualDraftStartRef.current.x - imgLeft) / imgDisplayWidth;
+      const imgY1 = (visualDraftStartRef.current.y - imgTop) / imgDisplayHeight;
+      const imgX2 = (canvasX - imgLeft) / imgDisplayWidth;
+      const imgY2 = (canvasY - imgTop) / imgDisplayHeight;
+      
+      // 画像座標をキャンバス座標に変換して表示
+      const x1 = imgX1 * imgDisplayWidth + imgLeft;
+      const y1 = imgY1 * imgDisplayHeight + imgTop;
+      const x2 = imgX2 * imgDisplayWidth + imgLeft;
+      const y2 = imgY2 * imgDisplayHeight + imgTop;
+      
+      const x = Math.min(x1, x2);
+      const y = Math.min(y1, y2);
+      const width = Math.abs(x2 - x1);
+      const height = Math.abs(y2 - y1);
+      
+      setVisualDraftRect({ x, y, width, height, imgX: Math.min(imgX1, imgX2), imgY: Math.min(imgY1, imgY2), imgW: Math.abs(imgX2 - imgX1), imgH: Math.abs(imgY2 - imgY1) });
     };
 
     const handleGlobalMouseUp = () => {
@@ -219,7 +294,7 @@ export default function Personal() {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, [visualDraftRect]);
+  }, [visualDraftRect, visualMode, visualZoom, visualImagePosition]);
 
   // 拡大画像プレビュー機能
   useEffect(() => {
@@ -877,10 +952,74 @@ export default function Personal() {
 
           {current === 3 && (
             <div>
-              <div className="card" style={{ padding: 16, display: 'grid', gap: 16, gridTemplateColumns: '1fr 360px', alignItems: 'start', background: 'var(--surface)', boxShadow: 'var(--shadow-md)', maxHeight: 'none', overflow: 'visible' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 16, gridTemplateColumns: '1fr 360px', alignItems: 'start' }}>
+                {/* メインコンテナ: 画像UIのみ */}
+                <div className="card" style={{ padding: 16, background: 'var(--surface)', boxShadow: 'var(--shadow-md)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>モード切替</div>
+                    <div style={{ 
+                      display: 'inline-flex', 
+                      border: '1px solid var(--border)', 
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      background: '#fff'
+                    }}>
+                      <button
+                        className="menu-item btn-small"
+                        style={{
+                          background: visualMode === 'pan' ? '#374151' : '#fff',
+                          color: visualMode === 'pan' ? '#ffffff' : 'var(--text)',
+                          border: 'none',
+                          borderRadius: 0,
+                          fontWeight: 600,
+                          padding: '8px 16px',
+                          borderRight: '1px solid var(--border)',
+                          margin: 0,
+                          boxShadow: visualMode === 'pan' ? 'var(--shadow-md)' : 'none',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => {
+                          setVisualMode('pan');
+                          setVisualDraftRect(null);
+                        }}
+                      >
+                        拡大縮小
+                      </button>
+                      <button
+                        className="menu-item btn-small"
+                        style={{
+                          background: visualMode === 'select' ? '#374151' : '#fff',
+                          color: visualMode === 'select' ? '#ffffff' : 'var(--text)',
+                          border: 'none',
+                          borderRadius: 0,
+                          fontWeight: 600,
+                          padding: '8px 16px',
+                          margin: 0,
+                          boxShadow: visualMode === 'select' ? 'var(--shadow-md)' : 'none',
+                          fontSize: '12px'
+                        }}
+                        onClick={() => {
+                          setVisualMode('select');
+                        }}
+                      >
+                        領域選択
+                      </button>
+                    </div>
+                    <div style={{ 
+                      fontSize: '11px', 
+                      color: 'var(--muted)',
+                      flex: 1,
+                      minWidth: 0
+                    }}>
+                      {visualMode === 'pan' ? (
+                        <><strong>拡大縮小モード</strong>: マウスホイールで拡大縮小、ドラッグで画像を移動できます</>
+                      ) : (
+                        <><strong>領域選択モード</strong>: 画像上でドラッグして領域を選択してください</>
+                      )}
+                    </div>
+                  </div>
                   <div style={{ 
-                    overflow: 'auto', 
+                    overflow: 'hidden', 
                     borderRadius: '12px',
                     border: '2px solid var(--border)',
                     background: '#fafbfc',
@@ -890,16 +1029,19 @@ export default function Personal() {
                     justifyContent: 'center',
                     alignItems: 'center',
                     width: '100%',
-                    height: '396px',
-                    maxHeight: '396px'
+                    height: '356px',
+                    maxHeight: '356px',
+                    position: 'relative'
                   }}
                   onWheel={(e) => {
-                    e.preventDefault();
-                    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-                    setVisualZoom(z => {
-                      const newZoom = Math.max(0.25, Math.min(3, Math.round((z + delta) * 100) / 100));
-                      return newZoom;
-                    });
+                    if (visualMode === 'pan') {
+                      e.preventDefault();
+                      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                      setVisualZoom(z => {
+                        const newZoom = Math.max(0.25, Math.min(3, Math.round((z + delta) * 100) / 100));
+                        return newZoom;
+                      });
+                    }
                   }}
                   >
                     <div
@@ -912,50 +1054,97 @@ export default function Personal() {
                         justifyContent: 'center',
                         alignItems: 'center',
                         userSelect: 'none',
-                        cursor: visualDraftRect ? 'crosshair' : 'default',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        cursor: visualMode === 'pan' ? (visualIsDragging ? 'grabbing' : 'grab') : (visualDraftRect ? 'crosshair' : 'default'),
+                        transition: visualMode === 'pan' && !visualIsDragging ? 'all 0.1s ease-out' : 'none',
                         margin: 0,
-                        padding: 0
+                        padding: 0,
+                        overflow: 'hidden'
                       }}
                       onMouseDown={(e) => {
                         if (e.button !== 0) return; // 左クリックのみ
                         e.preventDefault();
-                        const el = visualCanvasRef.current;
-                        if (!el) return;
-                        const r = el.getBoundingClientRect();
-                        const x = Math.min(Math.max(0, e.clientX - r.left), r.width);
-                        const y = Math.min(Math.max(0, e.clientY - r.top), r.height);
-                        visualDraftStartRef.current = { x, y };
-                        setVisualDraftRect({ x, y, width: 0, height: 0 });
+                        if (visualMode === 'pan') {
+                          setVisualIsDragging(true);
+                          visualDragStartRef.current = {
+                            x: e.clientX - visualImagePosition.x,
+                            y: e.clientY - visualImagePosition.y
+                          };
+                        } else if (visualMode === 'select') {
+                          const el = visualCanvasRef.current;
+                          const img = visualImageRef.current;
+                          if (!el || !img) return;
+                          const canvasRect = el.getBoundingClientRect();
+                          const canvasX = e.clientX - canvasRect.left;
+                          const canvasY = e.clientY - canvasRect.top;
+                          visualDraftStartRef.current = { x: canvasX, y: canvasY };
+                          setVisualDraftRect({ x: canvasX, y: canvasY, width: 0, height: 0 });
+                        }
                       }}
                     >
                       <img
+                        ref={visualImageRef}
                         src="/outputs/checkRequiredArea.png"
                         alt="チェック結果"
                         style={{
                           width: `${100 * visualZoom}%`,
                           height: `${100 * visualZoom}%`,
-                          maxWidth: '100%',
-                          maxHeight: '100%',
+                          maxWidth: 'none',
+                          maxHeight: 'none',
                           display: 'block',
                           objectFit: 'contain',
-                          pointerEvents: 'none',
+                          pointerEvents: visualMode === 'pan' ? 'auto' : 'none',
                           margin: 0,
-                          padding: 0
+                          padding: 0,
+                          transform: `translate(${visualImagePosition.x}px, ${visualImagePosition.y}px)`,
+                          cursor: visualMode === 'pan' ? (visualIsDragging ? 'grabbing' : 'grab') : 'default'
                         }}
                       />
               {(() => {
                         const el = visualCanvasRef.current;
-                        const cw = el ? el.clientWidth : 1;
-                        const ch = el ? el.clientHeight : 1;
+                        const img = visualImageRef.current;
+                        if (!el || !img || !img.naturalWidth || !img.naturalHeight) return null;
+                        
+                        // キャンバスのサイズを取得
+                        const canvasRect = el.getBoundingClientRect();
+                        const canvasWidth = canvasRect.width;
+                        const canvasHeight = canvasRect.height;
+                        
+                        // 画像の元のサイズとアスペクト比
+                        const imgNaturalWidth = img.naturalWidth;
+                        const imgNaturalHeight = img.naturalHeight;
+                        const imgAspectRatio = imgNaturalWidth / imgNaturalHeight;
+                        const canvasAspectRatio = canvasWidth / canvasHeight;
+                        
+                        // objectFit: containを考慮した画像の実際の表示サイズを計算
+                        let imgDisplayWidth: number;
+                        let imgDisplayHeight: number;
+                        if (imgAspectRatio > canvasAspectRatio) {
+                          // 画像が横長の場合、幅に合わせる
+                          imgDisplayWidth = canvasWidth * visualZoom;
+                          imgDisplayHeight = (canvasWidth / imgAspectRatio) * visualZoom;
+                        } else {
+                          // 画像が縦長の場合、高さに合わせる
+                          imgDisplayHeight = canvasHeight * visualZoom;
+                          imgDisplayWidth = (canvasHeight * imgAspectRatio) * visualZoom;
+                        }
+                        
+                        // 画像の中心位置（キャンバス座標）
+                        const imgCenterX = canvasWidth / 2;
+                        const imgCenterY = canvasHeight / 2;
+                        
+                        // 画像の左上位置（キャンバス座標、transformを考慮）
+                        const imgLeft = imgCenterX - imgDisplayWidth / 2 + visualImagePosition.x;
+                        const imgTop = imgCenterY - imgDisplayHeight / 2 + visualImagePosition.y;
+                        
                         return visualAnnotations.map(a => {
-                          const left = a.rect.xPct * cw;
-                          const top = a.rect.yPct * ch;
-                          const width = a.rect.wPct * cw;
-                          const height = a.rect.hPct * ch;
+                          // 画像座標（パーセンテージ）をキャンバス座標に変換
+                          const left = a.rect.xPct * imgDisplayWidth + imgLeft;
+                          const top = a.rect.yPct * imgDisplayHeight + imgTop;
+                          const width = a.rect.wPct * imgDisplayWidth;
+                          const height = a.rect.hPct * imgDisplayHeight;
                           const isSelected = a.id === visualSelectedId;
-                          const color = a.status === 'ok' ? '#059669' : '#dc2626';
-                          const fill = a.status === 'ok' ? 'rgba(5,150,105,0.08)' : 'rgba(220,38,38,0.08)';
+                          const color = '#dc2626';
+                          const fill = 'rgba(220,38,38,0.08)';
                 return (
                             <div
                               key={a.id}
@@ -966,8 +1155,8 @@ export default function Personal() {
                                 top,
                                 width,
                                 height,
-                                border: `2px solid ${isSelected ? color : color}`,
-                                boxShadow: isSelected ? `0 0 0 2px ${a.status === 'ok' ? 'rgba(5,150,105,0.25)' : 'rgba(220,38,38,0.25)'} inset` : undefined,
+                                border: `2px solid ${color}`,
+                                boxShadow: isSelected ? `0 0 0 2px rgba(220,38,38,0.25) inset` : undefined,
                                 background: fill,
                               }}
                               title=""
@@ -975,22 +1164,99 @@ export default function Personal() {
                           );
                         });
                       })()}
-                      {visualDraftRect && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            left: visualDraftRect.x,
-                            top: visualDraftRect.y,
-                            width: visualDraftRect.width,
-                            height: visualDraftRect.height,
-                            border: '2px dashed var(--accent)',
-                            background: 'rgba(99,102,241,0.08)',
-                          }}
-                        />
-                      )}
+                      {visualMode === 'select' && visualDraftRect && (() => {
+                        const el = visualCanvasRef.current;
+                        const img = visualImageRef.current;
+                        if (!el || !img) {
+                          // フォールバック: キャンバス座標で表示
+                          return (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: visualDraftRect.x,
+                                top: visualDraftRect.y,
+                                width: visualDraftRect.width,
+                                height: visualDraftRect.height,
+                                border: '2px dashed #dc2626',
+                                background: 'rgba(220,38,38,0.08)',
+                              }}
+                            />
+                          );
+                        }
+                        
+                        if (visualDraftRect.imgX === undefined || visualDraftRect.imgY === undefined || visualDraftRect.imgW === undefined || visualDraftRect.imgH === undefined) {
+                          // フォールバック: キャンバス座標で表示
+                          return (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                left: visualDraftRect.x,
+                                top: visualDraftRect.y,
+                                width: visualDraftRect.width,
+                                height: visualDraftRect.height,
+                                border: '2px dashed #dc2626',
+                                background: 'rgba(220,38,38,0.08)',
+                              }}
+                            />
+                          );
+                        }
+                        
+                        // キャンバスのサイズを取得
+                        const canvasRect = el.getBoundingClientRect();
+                        const canvasWidth = canvasRect.width;
+                        const canvasHeight = canvasRect.height;
+                        
+                        // 画像の元のサイズとアスペクト比
+                        const imgNaturalWidth = img.naturalWidth;
+                        const imgNaturalHeight = img.naturalHeight;
+                        const imgAspectRatio = imgNaturalWidth / imgNaturalHeight;
+                        const canvasAspectRatio = canvasWidth / canvasHeight;
+                        
+                        // objectFit: containを考慮した画像の実際の表示サイズを計算
+                        let imgDisplayWidth: number;
+                        let imgDisplayHeight: number;
+                        if (imgAspectRatio > canvasAspectRatio) {
+                          // 画像が横長の場合、幅に合わせる
+                          imgDisplayWidth = canvasWidth * visualZoom;
+                          imgDisplayHeight = (canvasWidth / imgAspectRatio) * visualZoom;
+                        } else {
+                          // 画像が縦長の場合、高さに合わせる
+                          imgDisplayHeight = canvasHeight * visualZoom;
+                          imgDisplayWidth = (canvasHeight * imgAspectRatio) * visualZoom;
+                        }
+                        
+                        // 画像の中心位置（キャンバス座標）
+                        const imgCenterX = canvasWidth / 2;
+                        const imgCenterY = canvasHeight / 2;
+                        
+                        // 画像の左上位置（キャンバス座標、transformを考慮）
+                        const imgLeft = imgCenterX - imgDisplayWidth / 2 + visualImagePosition.x;
+                        const imgTop = imgCenterY - imgDisplayHeight / 2 + visualImagePosition.y;
+                        
+                        // 画像座標をキャンバス座標に変換
+                        const x = visualDraftRect.imgX * imgDisplayWidth + imgLeft;
+                        const y = visualDraftRect.imgY * imgDisplayHeight + imgTop;
+                        const width = visualDraftRect.imgW * imgDisplayWidth;
+                        const height = visualDraftRect.imgH * imgDisplayHeight;
+                        
+                        return (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: x,
+                              top: y,
+                              width,
+                              height,
+                              border: '2px dashed var(--accent)',
+                              background: 'rgba(99,102,241,0.08)',
+                            }}
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
+                {/* メモコンテナ: 右隣に配置 */}
                 <div className="card" style={{ 
                   padding: 16, 
                   position: 'sticky', 
@@ -998,197 +1264,180 @@ export default function Personal() {
                   background: 'var(--surface)',
                   boxShadow: 'var(--shadow-md)',
                   borderRadius: '14px',
-                  border: '1px solid var(--border)'
+                  border: '1px solid var(--border)',
+                  maxHeight: 'calc(100vh - 32px)',
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}>
                   <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 8, 
                     marginBottom: 16,
                     paddingBottom: 12,
-                    borderBottom: '2px solid var(--border)'
+                    borderBottom: '1px solid var(--border)',
+                    flexShrink: 0
                   }}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent)' }}>
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <div className="toolbar-title" style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>メモ</div>
-                  </div>
-                  <div style={{ display: 'grid', gap: 12 }}>
-                    <div style={{ 
-                      padding: '12px', 
-                      background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', 
-                      borderRadius: '10px',
-                      border: '1px solid #bae6fd',
-                      fontSize: '13px',
-                      color: '#0369a1',
-                      fontWeight: 500
-                    }}>
-                      💡 画像上でドラッグして領域を選択してください
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#dc2626' }}>NG登録</div>
+                      <div className="form-hint" style={{ margin: 0, fontSize: '11px', color: 'var(--muted)' }}>
+                        領域を選択してNG箇所を登録してください
+                      </div>
                     </div>
-                    {visualDraftRect && (
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
+                    {visualMode === 'select' && visualDraftRect && (
                       <div style={{ 
                         display: 'grid', 
                         gap: 12,
                         padding: '16px',
-                        background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-                        borderRadius: '12px',
-                        border: '2px solid #fbbf24',
-                        boxShadow: '0 4px 6px rgba(251, 191, 36, 0.1)'
+                        background: '#fff',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border)',
+                        flexShrink: 0
                       }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 8,
-                          padding: '8px 12px',
-                          background: '#fff',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border)'
-                        }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent)' }}>
-                            <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>
-                            選択中の領域: {Math.round(visualDraftRect.width)}×{Math.round(visualDraftRect.height)}px
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', minWidth: 48 }}>判定</span>
-                          <button
-                            className="menu-item btn-small"
-                            style={{ 
-                              background: visualDraftStatus === 'ok' ? '#059669' : '#fff', 
-                              color: visualDraftStatus === 'ok' ? '#fff' : '#059669', 
-                              borderColor: '#059669',
-                              fontWeight: 700,
-                              padding: '8px 20px',
-                              borderRadius: '8px',
-                              transition: 'all 0.2s',
-                              boxShadow: visualDraftStatus === 'ok' ? '0 2px 4px rgba(5, 150, 105, 0.3)' : '0 1px 2px rgba(0,0,0,0.05)'
-                            }}
-                            onClick={() => setVisualDraftStatus('ok')}
-                            onMouseEnter={(e) => {
-                              if (visualDraftStatus !== 'ok') {
-                                e.currentTarget.style.background = '#d1fae5';
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (visualDraftStatus !== 'ok') {
-                                e.currentTarget.style.background = '#fff';
-                                e.currentTarget.style.transform = 'scale(1)';
-                              }
-                            }}
-                          >✓ OK</button>
-                          <button
-                            className="menu-item btn-small"
-                            style={{ 
-                              background: visualDraftStatus === 'ng' ? '#dc2626' : '#fff', 
-                              color: visualDraftStatus === 'ng' ? '#fff' : '#dc2626', 
-                              borderColor: '#dc2626',
-                              fontWeight: 700,
-                              padding: '8px 20px',
-                              borderRadius: '8px',
-                              transition: 'all 0.2s',
-                              boxShadow: visualDraftStatus === 'ng' ? '0 2px 4px rgba(220, 38, 38, 0.3)' : '0 1px 2px rgba(0,0,0,0.05)'
-                            }}
-                            onClick={() => setVisualDraftStatus('ng')}
-                            onMouseEnter={(e) => {
-                              if (visualDraftStatus !== 'ng') {
-                                e.currentTarget.style.background = '#fee2e2';
-                                e.currentTarget.style.transform = 'scale(1.05)';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (visualDraftStatus !== 'ng') {
-                                e.currentTarget.style.background = '#fff';
-                                e.currentTarget.style.transform = 'scale(1)';
-                              }
-                            }}
-                          >✗ NG</button>
-                        </div>
                         <textarea
                           className="form-input"
                           rows={3}
-                          placeholder="この領域についてのコメントを入力..."
+                          placeholder="コメントを入力..."
                           value={visualCommentDraft}
                           onChange={(e) => setVisualCommentDraft(e.target.value)}
                           style={{
-                            borderRadius: '10px',
-                            border: '2px solid var(--border)',
-                            padding: '12px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border)',
+                            padding: '10px',
                             fontSize: '13px',
-                            transition: 'all 0.2s',
-                            resize: 'vertical'
+                            resize: 'vertical',
+                            width: '100%'
                           }}
                         />
                         <div style={{ display: 'flex', gap: 8 }}>
                           <button
                             className="menu-item"
                             style={{
-                              flex: 1,
-                              background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+                              background: '#dc2626',
                               color: '#fff',
                               border: 'none',
-                              fontWeight: 700,
-                              padding: '8px 16px',
-                              borderRadius: '10px',
-                              transition: 'all 0.2s',
-                              boxShadow: '0 2px 4px rgba(147, 51, 234, 0.25)',
-                              fontSize: '12px'
+                              fontWeight: 600,
+                              padding: '10px 16px',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              whiteSpace: 'nowrap'
                             }}
                             onClick={() => {
                               const el = visualCanvasRef.current;
-                              if (!el || !visualDraftRect) return;
-                              const cw = el.clientWidth || 1;
-                              const ch = el.clientHeight || 1;
-                              const xPct = Math.max(0, Math.min(1, visualDraftRect.x / cw));
-                              const yPct = Math.max(0, Math.min(1, visualDraftRect.y / ch));
-                              const wPct = Math.max(0, Math.min(1, visualDraftRect.width / cw));
-                              const hPct = Math.max(0, Math.min(1, visualDraftRect.height / ch));
-                              if (wPct < 0.01 || hPct < 0.01) {
+                              const img = visualImageRef.current;
+                              if (!el || !visualDraftRect || !img || !img.naturalWidth || !img.naturalHeight) return;
+                              
+                              // 画像を切り取る関数
+                              const cropImage = (xPct: number, yPct: number, wPct: number, hPct: number): string | undefined => {
+                                try {
+                                  const canvas = document.createElement('canvas');
+                                  const ctx = canvas.getContext('2d');
+                                  if (!ctx) return undefined;
+                                  
+                                  // 切り取りサイズ（最大140px = 200pxの7割）
+                                  const maxSize = 140;
+                                  const aspectRatio = wPct / hPct;
+                                  let cropWidth: number;
+                                  let cropHeight: number;
+                                  if (aspectRatio > 1) {
+                                    cropWidth = maxSize;
+                                    cropHeight = maxSize / aspectRatio;
+                                  } else {
+                                    cropHeight = maxSize;
+                                    cropWidth = maxSize * aspectRatio;
+                                  }
+                                  
+                                  canvas.width = cropWidth;
+                                  canvas.height = cropHeight;
+                                  
+                                  // 画像の元のサイズから切り取り領域を計算
+                                  const srcX = xPct * img.naturalWidth;
+                                  const srcY = yPct * img.naturalHeight;
+                                  const srcWidth = wPct * img.naturalWidth;
+                                  const srcHeight = hPct * img.naturalHeight;
+                                  
+                                  // 画像を切り取って描画
+                                  ctx.drawImage(
+                                    img,
+                                    srcX, srcY, srcWidth, srcHeight,
+                                    0, 0, cropWidth, cropHeight
+                                  );
+                                  
+                                  return canvas.toDataURL('image/png');
+                                } catch (e) {
+                                  console.error('画像の切り取りに失敗しました:', e);
+                                  return undefined;
+                                }
+                              };
+                              
+                              // 画像座標系で保存
+                              if (visualDraftRect.imgX !== undefined && visualDraftRect.imgY !== undefined && visualDraftRect.imgW !== undefined && visualDraftRect.imgH !== undefined) {
+                                const xPct = Math.max(0, Math.min(1, visualDraftRect.imgX));
+                                const yPct = Math.max(0, Math.min(1, visualDraftRect.imgY));
+                                const wPct = Math.max(0, Math.min(1, visualDraftRect.imgW));
+                                const hPct = Math.max(0, Math.min(1, visualDraftRect.imgH));
+                                if (wPct < 0.01 || hPct < 0.01) {
+                                  setVisualDraftRect(null);
+                                  setVisualCommentDraft('');
+                                  return;
+                                }
+                                const thumbnail = cropImage(xPct, yPct, wPct, hPct);
+                                const nextId = (visualAnnotations.at(-1)?.id ?? 0) + 1;
+                                const visualImg = visualImageRef.current;
+                                const item = { 
+                                  id: nextId, 
+                                  rect: { xPct, yPct, wPct, hPct }, 
+                                  comment: visualCommentDraft.trim(), 
+                                  thumbnail,
+                                  visualImageNaturalWidth: visualImg?.naturalWidth,
+                                  visualImageNaturalHeight: visualImg?.naturalHeight
+                                };
+                                setVisualAnnotations(prev => [...prev, item]);
+                                setVisualSelectedId(nextId);
                                 setVisualDraftRect(null);
                                 setVisualCommentDraft('');
-                                return;
+                              } else {
+                                // フォールバック: キャンバス座標で保存
+                                const cw = el.clientWidth || 1;
+                                const ch = el.clientHeight || 1;
+                                const xPct = Math.max(0, Math.min(1, visualDraftRect.x / cw));
+                                const yPct = Math.max(0, Math.min(1, visualDraftRect.y / ch));
+                                const wPct = Math.max(0, Math.min(1, visualDraftRect.width / cw));
+                                const hPct = Math.max(0, Math.min(1, visualDraftRect.height / ch));
+                                if (wPct < 0.01 || hPct < 0.01) {
+                                  setVisualDraftRect(null);
+                                  setVisualCommentDraft('');
+                                  return;
+                                }
+                                const thumbnail = cropImage(xPct, yPct, wPct, hPct);
+                                const nextId = (visualAnnotations.at(-1)?.id ?? 0) + 1;
+                                const visualImg = visualImageRef.current;
+                                const item = { 
+                                  id: nextId, 
+                                  rect: { xPct, yPct, wPct, hPct }, 
+                                  comment: visualCommentDraft.trim(), 
+                                  thumbnail,
+                                  visualImageNaturalWidth: visualImg?.naturalWidth,
+                                  visualImageNaturalHeight: visualImg?.naturalHeight
+                                };
+                                setVisualAnnotations(prev => [...prev, item]);
+                                setVisualSelectedId(nextId);
+                                setVisualDraftRect(null);
+                                setVisualCommentDraft('');
                               }
-                              const nextId = (visualAnnotations.at(-1)?.id ?? 0) + 1;
-                              const item = { id: nextId, rect: { xPct, yPct, wPct, hPct }, comment: visualCommentDraft.trim(), status: visualDraftStatus };
-                              setVisualAnnotations(prev => [...prev, item]);
-                              setVisualSelectedId(nextId);
-                              setVisualDraftRect(null);
-                              setVisualCommentDraft('');
-                              setVisualDraftStatus('ng');
                             }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.transform = 'translateY(-2px)';
-                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(147, 51, 234, 0.35)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(147, 51, 234, 0.25)';
-                            }}
-                          >追加</button>
+                          >NG登録</button>
                           <button
                             className="menu-item"
                             style={{ 
                               background: '#fff', 
                               color: 'var(--text)', 
                               borderColor: 'var(--border)',
-                              padding: '8px 14px',
-                              borderRadius: '10px',
+                              padding: '10px 16px',
+                              borderRadius: '6px',
                               fontWeight: 600,
-                              transition: 'all 0.2s',
-                              fontSize: '12px'
+                              fontSize: '13px'
                             }}
-                            onClick={() => { setVisualDraftRect(null); setVisualCommentDraft(''); setVisualDraftStatus('ng'); }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = '#f8fafc';
-                              e.currentTarget.style.transform = 'translateY(-1px)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = '#fff';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                            }}
+                            onClick={() => { setVisualDraftRect(null); setVisualCommentDraft(''); }}
                           >キャンセル</button>
                         </div>
                       </div>
@@ -1197,194 +1446,143 @@ export default function Personal() {
                       <div style={{ 
                         height: 2, 
                         background: 'linear-gradient(to right, transparent, var(--border), transparent)', 
-                        margin: '8px 0' 
+                        margin: '8px 0',
+                        flexShrink: 0
                       }} />
                     )}
-                    <div style={{ display: 'grid', gap: 12 }}>
+                    <div style={{ 
+                      display: 'grid', 
+                      gap: 12, 
+                      overflowY: 'auto',
+                      flex: 1,
+                      minHeight: 0,
+                      paddingRight: 4
+                    }}>
                       {visualAnnotations.length === 0 && (
                         <div style={{ 
                           padding: '24px', 
                           textAlign: 'center',
-                          background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-                          borderRadius: '12px',
-                          border: '2px dashed var(--border)',
                           color: 'var(--muted)',
-                          fontSize: '14px'
+                          fontSize: '13px'
                         }}>
-                          📝 判定はまだありません
+                          NG登録はまだありません
                         </div>
                       )}
-                      {visualAnnotations.map(a => (
-                        <div 
-                          key={a.id} 
-                          className="card" 
-                          style={{ 
-                            padding: 16, 
-                            borderColor: a.id === visualSelectedId ? 'var(--accent)' : 'var(--border)',
-                            borderWidth: a.id === visualSelectedId ? '2px' : '1px',
-                            background: a.id === visualSelectedId ? 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)' : 'var(--surface)',
-                            borderRadius: '12px',
-                            transition: 'all 0.2s',
-                            boxShadow: a.id === visualSelectedId ? '0 4px 12px rgba(124, 58, 237, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)'
-                          }}
-                          onMouseEnter={(e) => {
-                            if (a.id !== visualSelectedId) {
-                              e.currentTarget.style.transform = 'translateY(-2px)';
-                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (a.id !== visualSelectedId) {
-                              e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-                            }
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 8,
-                              padding: '6px 12px',
-                              background: a.id === visualSelectedId ? 'var(--accent)' : 'var(--border)',
-                              color: a.id === visualSelectedId ? '#fff' : 'var(--text)',
-                              borderRadius: '8px',
-                              fontWeight: 700,
-                              fontSize: '12px'
-                            }}>
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                              領域 #{a.id}
-                            </div>
-                            <div style={{ display: 'flex', gap: 6 }}>
-                              <button
-                                className="menu-item btn-small"
-                                style={{ 
-                                  background: a.id === visualSelectedId ? 'var(--accent)' : '#fff', 
-                                  color: a.id === visualSelectedId ? '#fff' : 'var(--text)', 
-                                  borderColor: 'var(--accent)',
-                                  padding: '6px 14px',
-                                  borderRadius: '8px',
-                                  fontSize: '12px',
-                                  fontWeight: 600,
-                                  transition: 'all 0.2s'
-                                }}
-                                onClick={() => setVisualSelectedId(a.id)}
-                                onMouseEnter={(e) => {
-                                  if (a.id !== visualSelectedId) {
-                                    e.currentTarget.style.background = '#f3e8ff';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (a.id !== visualSelectedId) {
+                      {visualAnnotations.length > 0 && (
+                        <div style={{ display: 'grid', gap: 10 }}>
+                          <div className="form-label" style={{ marginBottom: 0, fontSize: '13px', fontWeight: 600 }}>登録済み一覧</div>
+                          <div style={{ display: 'grid', gap: 6 }}>
+                            {visualAnnotations.map((a, index) => (
+                              <div key={`${a.id}-${index}`} style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: 10, 
+                                padding: '10px 12px', 
+                                background: '#fef2f2', 
+                                borderRadius: 6, 
+                                border: '1px solid #fee2e2',
+                                transition: 'all 0.2s ease'
+                              }}>
+                                {a.thumbnail ? (
+                                  <div style={{ 
+                                    width: 40, 
+                                    height: 40, 
+                                    borderRadius: 4, 
+                                    overflow: 'hidden',
+                                    border: '1px solid #fee2e2',
+                                    background: '#fff',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    flexShrink: 0
+                                  }}>
+                                    <img 
+                                      src={a.thumbnail} 
+                                      alt={`NG${a.id}の画像`}
+                                      style={{
+                                        maxWidth: '100%',
+                                        maxHeight: '100%',
+                                        objectFit: 'contain',
+                                        display: 'block'
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div style={{ 
+                                    width: 40, 
+                                    height: 40, 
+                                    borderRadius: 4,
+                                    background: '#fef2f2',
+                                    border: '1px solid #fee2e2',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#dc2626',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    flexShrink: 0
+                                  }}>
+                                    NG{a.id}
+                                  </div>
+                                )}
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontWeight: 600, fontSize: '13px', color: '#dc2626', marginBottom: 2 }}>NG{a.id}</div>
+                                  {a.comment && (
+                                    <div style={{ margin: 0, fontSize: '11px', color: '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {a.comment}
+                                    </div>
+                                  )}
+                                  {!a.comment && (
+                                    <div style={{ margin: 0, fontSize: '11px', color: '#334155' }}>
+                                      コメントなし
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  className="menu-item btn-small"
+                                  style={{ 
+                                    background: '#fff', 
+                                    color: '#64748b', 
+                                    borderColor: '#e2e8f0', 
+                                    flexShrink: 0,
+                                    padding: '6px',
+                                    minWidth: 'auto',
+                                    width: '28px',
+                                    height: '28px',
+                                    borderRadius: 4,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    transition: 'all 0.2s ease',
+                                    border: '1px solid #e2e8f0'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = '#fee2e2';
+                                    e.currentTarget.style.borderColor = '#fecaca';
+                                    e.currentTarget.style.color = '#dc2626';
+                                  }}
+                                  onMouseLeave={(e) => {
                                     e.currentTarget.style.background = '#fff';
-                                  }
-                                }}
-                              >選択</button>
-                              <button
-                                className="menu-item btn-small"
-                                style={{ 
-                                  background: '#fff', 
-                                  color: '#dc2626', 
-                                  borderColor: '#dc2626',
-                                  padding: '6px 14px',
-                                  borderRadius: '8px',
-                                  fontSize: '12px',
-                                  fontWeight: 600,
-                                  transition: 'all 0.2s'
-                                }}
-                                onClick={() => {
-                                  setVisualAnnotations(prev => prev.filter(x => x.id !== a.id));
-                                  if (visualSelectedId === a.id) setVisualSelectedId(null);
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = '#fee2e2';
-                                  e.currentTarget.style.transform = 'scale(1.05)';
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = '#fff';
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                }}
-                              >削除</button>
-                            </div>
+                                    e.currentTarget.style.borderColor = '#e2e8f0';
+                                    e.currentTarget.style.color = '#64748b';
+                                  }}
+                                  onClick={() => {
+                                    setVisualAnnotations(prev => prev.filter(x => x.id !== a.id));
+                                    if (visualSelectedId === a.id) {
+                                      setVisualSelectedId(null);
+                                    }
+                                  }}
+                                  title="削除"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 6L6 18M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', minWidth: 48 }}>判定</span>
-                            <button
-                              className="menu-item btn-small"
-                              style={{ 
-                                background: a.status === 'ok' ? '#059669' : '#fff', 
-                                color: a.status === 'ok' ? '#fff' : '#059669', 
-                                borderColor: '#059669',
-                                fontWeight: 700,
-                                padding: '8px 20px',
-                                borderRadius: '8px',
-                                transition: 'all 0.2s',
-                                boxShadow: a.status === 'ok' ? '0 2px 4px rgba(5, 150, 105, 0.3)' : '0 1px 2px rgba(0,0,0,0.05)'
-                              }}
-                              onClick={() => setVisualAnnotations(prev => prev.map(x => x.id === a.id ? { ...x, status: 'ok' } : x))}
-                              onMouseEnter={(e) => {
-                                if (a.status !== 'ok') {
-                                  e.currentTarget.style.background = '#d1fae5';
-                                  e.currentTarget.style.transform = 'scale(1.05)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (a.status !== 'ok') {
-                                  e.currentTarget.style.background = '#fff';
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                }
-                              }}
-                            >✓ OK</button>
-                            <button
-                              className="menu-item btn-small"
-                              style={{ 
-                                background: a.status === 'ng' ? '#dc2626' : '#fff', 
-                                color: a.status === 'ng' ? '#fff' : '#dc2626', 
-                                borderColor: '#dc2626',
-                                fontWeight: 700,
-                                padding: '8px 20px',
-                                borderRadius: '8px',
-                                transition: 'all 0.2s',
-                                boxShadow: a.status === 'ng' ? '0 2px 4px rgba(220, 38, 38, 0.3)' : '0 1px 2px rgba(0,0,0,0.05)'
-                              }}
-                              onClick={() => setVisualAnnotations(prev => prev.map(x => x.id === a.id ? { ...x, status: 'ng' } : x))}
-                              onMouseEnter={(e) => {
-                                if (a.status !== 'ng') {
-                                  e.currentTarget.style.background = '#fee2e2';
-                                  e.currentTarget.style.transform = 'scale(1.05)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (a.status !== 'ng') {
-                                  e.currentTarget.style.background = '#fff';
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                }
-                              }}
-                            >✗ NG</button>
-                          </div>
-                          <textarea
-                            className="form-input"
-                            rows={3}
-                            placeholder="コメントを入力..."
-                            value={a.comment}
-                            onChange={(e) => {
-                              const v = e.target.value;
-                              setVisualAnnotations(prev => prev.map(x => x.id === a.id ? { ...x, comment: v } : x));
-                            }}
-                            style={{
-                              borderRadius: '10px',
-                              border: '2px solid var(--border)',
-                              padding: '12px',
-                              fontSize: '13px',
-                              transition: 'all 0.2s',
-                              resize: 'vertical',
-                              width: '100%'
-                            }}
-                          />
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1409,53 +1607,162 @@ export default function Personal() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ display: 'grid', gap: 6 }}>
+                    <div style={{ display: 'grid', gap: 4 }}>
                       {/* NG1 */}
-                      <div className="card" style={{ padding: '6px 8px', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', background: '#fee2e2' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '40px 112px 1fr', gap: 8, alignItems: 'center' }}>
+                      <div className="card" style={{ padding: '4px 6px', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', background: '#fee2e2' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '28px 70px 1fr', gap: 6, alignItems: 'center' }}>
                           <div style={{ display: 'grid', placeItems: 'center' }}>
-                            <div style={{ width: 20, height: 20, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 10 }}>1</div>
+                            <div style={{ width: 18, height: 18, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 9 }}>1</div>
                           </div>
                           <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/mark1.png')}>
                             <img
                               src="/outputs/ng/mark1.png"
                               alt="NG1"
-                              style={{ width: 100, height: 64, objectFit: 'contain', display: 'block' }}
+                              style={{ width: 64, height: 40, objectFit: 'contain', display: 'block' }}
                             />
                           </div>
                           <div style={{ display: 'grid', gap: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: '13px' }}>紙リサイクルマーク</div>
-                            <div style={{ lineHeight: 1.3, color: 'var(--muted)', fontSize: '13px' }}>形状に異常があります。</div>
+                            <div style={{ fontWeight: 700, fontSize: '12px' }}>紙リサイクルマーク</div>
+                            <div style={{ lineHeight: 1.3, color: 'var(--muted)', fontSize: '11px' }}>形状に異常があります。</div>
                           </div>
                         </div>
                       </div>
                       {/* NG2 */}
-                      <div className="card" style={{ padding: '6px 8px', borderRadius: 12, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', background: '#fee2e2' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '40px 112px 1fr', gap: 8, alignItems: 'center' }}>
+                      <div className="card" style={{ padding: '4px 6px', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', background: '#fee2e2' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '28px 70px 1fr', gap: 6, alignItems: 'center' }}>
                           <div style={{ display: 'grid', placeItems: 'center' }}>
-                            <div style={{ width: 20, height: 20, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 10 }}>2</div>
+                            <div style={{ width: 18, height: 18, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 9 }}>2</div>
                           </div>
                           <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/ng/text1.png')}>
                             <img
                               src="/outputs/ng/text1.png"
                               alt="NG2"
-                              style={{ width: 100, height: 64, objectFit: 'contain', display: 'block' }}
+                              style={{ width: 64, height: 40, objectFit: 'contain', display: 'block' }}
                             />
                           </div>
                           <div style={{ display: 'grid', gap: 1 }}>
-                            <div style={{ fontWeight: 700, fontSize: '13px' }}>一括表示</div>
-                            <div style={{ lineHeight: 1.3, color: 'var(--muted)', fontSize: '13px' }}>フォントサイズが8pt未満です。</div>
+                            <div style={{ fontWeight: 700, fontSize: '12px' }}>一括表示</div>
+                            <div style={{ lineHeight: 1.3, color: 'var(--muted)', fontSize: '11px' }}>フォントサイズが8pt未満です。</div>
                           </div>
                         </div>
                       </div>
+                      {/* 目視チェックで登録したNG */}
+                      {visualAnnotations.map((a, index) => {
+                        const ngNumber = 3 + index; // 既存のNG1、NG2の後に続く番号
+                        return (
+                          <div key={`visual-ng-${a.id}`} className="card" style={{ padding: '4px 6px', borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.04)', background: '#fee2e2' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '28px 70px 1fr', gap: 6, alignItems: 'center' }}>
+                              <div style={{ display: 'grid', placeItems: 'center' }}>
+                                <div style={{ width: 18, height: 18, borderRadius: 999, background: '#dc2626', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 9 }}>{ngNumber}</div>
+                              </div>
+                              <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => a.thumbnail && setEnlargedImage(a.thumbnail)}>
+                                {a.thumbnail ? (
+                                  <img
+                                    src={a.thumbnail}
+                                    alt={`NG${ngNumber}`}
+                                    style={{ width: 64, height: 40, objectFit: 'contain', display: 'block' }}
+                                  />
+                                ) : (
+                                  <div style={{ width: 64, height: 40, background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#dc2626', fontSize: '10px', fontWeight: 600 }}>
+                                    NG{ngNumber}
+                                  </div>
+                                )}
+                              </div>
+                              <div style={{ display: 'grid', gap: 1 }}>
+                                <div style={{ fontWeight: 700, fontSize: '12px' }}>目視チェック</div>
+                                <div style={{ lineHeight: 1.3, color: 'var(--muted)', fontSize: '11px' }}>{a.comment || 'コメントなし'}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div style={{ display: 'grid', placeItems: 'center', cursor: 'pointer' }} onClick={() => setEnlargedImage('/outputs/mark_text_NG_highlight1.png')}>
+                  <div style={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
                     <img
+                      ref={resultImageRef}
                       src="/outputs/mark_text_NG_highlight1.png"
                       alt="結果表示"
                       style={{ width: '100%', maxWidth: 381, maxHeight: 229, height: 'auto', display: 'block', objectFit: 'contain' }}
+                      onLoad={() => {
+                        setResultImageLoaded(true);
+                      }}
                     />
+                    {resultImageRef.current && resultImageLoaded && visualAnnotations.length > 0 && resultImageRef.current.complete && resultImageRef.current.naturalWidth > 0 && (() => {
+                      const resultImg = resultImageRef.current!;
+                      const resultImgRect = resultImg.getBoundingClientRect();
+                      const resultContainerWidth = resultImgRect.width;
+                      const resultContainerHeight = resultImgRect.height;
+                      const resultNaturalWidth = resultImg.naturalWidth;
+                      const resultNaturalHeight = resultImg.naturalHeight;
+                      const resultAspectRatio = resultNaturalWidth / resultNaturalHeight;
+                      const resultContainerAspectRatio = resultContainerWidth / resultContainerHeight;
+                      
+                      // objectFit: containを考慮した画像の実際の表示サイズを計算
+                      let resultDisplayWidth: number;
+                      let resultDisplayHeight: number;
+                      let resultOffsetX: number;
+                      let resultOffsetY: number;
+                      
+                      if (resultAspectRatio > resultContainerAspectRatio) {
+                        // 画像が横長の場合、幅に合わせる
+                        resultDisplayWidth = resultContainerWidth;
+                        resultDisplayHeight = resultContainerWidth / resultAspectRatio;
+                        resultOffsetX = 0;
+                        resultOffsetY = (resultContainerHeight - resultDisplayHeight) / 2;
+                      } else {
+                        // 画像が縦長の場合、高さに合わせる
+                        resultDisplayHeight = resultContainerHeight;
+                        resultDisplayWidth = resultContainerHeight * resultAspectRatio;
+                        resultOffsetX = (resultContainerWidth - resultDisplayWidth) / 2;
+                        resultOffsetY = 0;
+                      }
+                      
+                      // 親要素の位置を取得
+                      const parentEl = resultImg.parentElement;
+                      const parentRect = parentEl?.getBoundingClientRect();
+                      const parentLeft = parentRect?.left || 0;
+                      const parentTop = parentRect?.top || 0;
+                      const imgLeft = resultImgRect.left - parentLeft;
+                      const imgTop = resultImgRect.top - parentTop;
+                      
+                      return (
+                        <div style={{
+                          position: 'absolute',
+                          left: imgLeft + resultOffsetX,
+                          top: imgTop + resultOffsetY,
+                          width: resultDisplayWidth,
+                          height: resultDisplayHeight,
+                          pointerEvents: 'none'
+                        }}>
+                          {visualAnnotations.map((a, index) => {
+                            // 座標は画像の自然サイズに対するパーセンテージ（0-1の範囲）として保存されている
+                            // 目視チェック画面と同じ計算方法で、表示サイズに変換
+                            const x = a.rect.xPct * resultDisplayWidth;
+                            const y = a.rect.yPct * resultDisplayHeight;
+                            const width = a.rect.wPct * resultDisplayWidth;
+                            const height = a.rect.hPct * resultDisplayHeight;
+                            
+                            return (
+                              <div
+                                key={`result-annotation-${a.id}`}
+                                style={{
+                                  position: 'absolute',
+                                  left: x,
+                                  top: y,
+                                  width,
+                                  height,
+                                  border: '2px solid #dc2626',
+                                  background: 'rgba(220, 38, 38, 0.15)',
+                                  borderRadius: 2,
+                                  boxSizing: 'border-box'
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="card" style={{ padding: 12, marginTop: 2 }}>

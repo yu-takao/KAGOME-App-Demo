@@ -20,6 +20,8 @@ export default function MarkSettings() {
   const [clearMaxWidthMm, setClearMaxWidthMm] = useState<string>('');
   const [clearMinHeightMm, setClearMinHeightMm] = useState<string>('');
   const [clearMaxHeightMm, setClearMaxHeightMm] = useState<string>('');
+  const [hasBorder, setHasBorder] = useState<boolean>(false);
+  const [borderType, setBorderType] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [categories, setCategories] = useState<string[]>(['コーポレート', 'プロダクトブランド', 'マーク', '活動']);
   const [showNewCategory, setShowNewCategory] = useState<boolean>(false);
@@ -213,6 +215,34 @@ export default function MarkSettings() {
             )}
           </div>
         </div>
+        <div className="form-row">
+          <label className="form-label">フチ</label>
+          <div className="control-offset" style={{ display: 'grid', gap: 8 }}>
+            <label className="radio" style={{ gap: 10, alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={hasBorder}
+                onChange={(e) => {
+                  const v = e.target.checked;
+                  setHasBorder(v);
+                  if (!v) {
+                    setBorderType('');
+                  }
+                }}
+              />
+              <span>あり</span>
+            </label>
+            {hasBorder && (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select className="form-select" value={borderType} onChange={(e) => setBorderType(e.target.value)} style={{ maxWidth: 200 }}>
+                  <option value="">選択してください</option>
+                  <option value="単色">単色</option>
+                  <option value="ぼかし">ぼかし</option>
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {showPicker && (
@@ -297,7 +327,7 @@ export default function MarkSettings() {
           }}
         >登録</button>
         <button 
-          onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}
+          onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setHasBorder(false); setBorderType(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}
           style={{
             padding: '8px 14px',
             fontSize: '12px',
