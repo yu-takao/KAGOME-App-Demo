@@ -387,31 +387,31 @@ export default function Personal() {
       <div style={{ marginBottom: 16 }}>
         <h2 style={{ margin: 0, marginBottom: 12, fontSize: '14px', fontWeight: 700, textAlign: 'left' }}>デザイン検査</h2>
         <div className="wizard" style={{ display: 'flex', justifyContent: 'center' }}>
-          {(() => {
-            const visibleSteps = steps.filter(s => s.key !== 'confirm');
-            const currentForIndicator = (() => {
-              let idx = current;
-              // 確認ステップ（非表示）にいる場合は一つ前の表示ステップをアクティブ表示
-              while (idx >= 0 && steps[idx]?.key === 'confirm') idx--;
-              return Math.max(0, idx);
-            })();
-            return (
+        {(() => {
+          const visibleSteps = steps.filter(s => s.key !== 'confirm');
+          const currentForIndicator = (() => {
+            let idx = current;
+            // 確認ステップ（非表示）にいる場合は一つ前の表示ステップをアクティブ表示
+            while (idx >= 0 && steps[idx]?.key === 'confirm') idx--;
+            return Math.max(0, idx);
+          })();
+          return (
               <div className="steps" style={{ gridTemplateColumns: `repeat(${visibleSteps.length}, 1fr)`, width: '100%', maxWidth: '990px' }}>
-                {visibleSteps.map((s, visibleIdx) => {
-                  const actualIdx = steps.findIndex(t => t.key === s.key);
-                  const isActive = actualIdx === currentForIndicator;
-                  const isCompleted = actualIdx < currentForIndicator;
-              return (
-                <div key={s.key} className={`step${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}>
-                      <div className="step-badge">{isCompleted ? '✓' : visibleIdx + 1}</div>
-                  <div className="step-title">{s.title}</div>
-                      {visibleIdx < visibleSteps.length - 1 && <div className="step-connector" />}
-                </div>
-              );
-            })}
-          </div>
+              {visibleSteps.map((s, visibleIdx) => {
+                const actualIdx = steps.findIndex(t => t.key === s.key);
+                const isActive = actualIdx === currentForIndicator;
+                const isCompleted = actualIdx < currentForIndicator;
+            return (
+              <div key={s.key} className={`step${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}>
+                    <div className="step-badge">{isCompleted ? '✓' : visibleIdx + 1}</div>
+                <div className="step-title">{s.title}</div>
+                    {visibleIdx < visibleSteps.length - 1 && <div className="step-connector" />}
+              </div>
             );
-          })()}
+          })}
+        </div>
+          );
+        })()}
         </div>
       </div>
       <div className="wizard" style={current === 5 ? { marginBottom: 2 } : undefined}>
