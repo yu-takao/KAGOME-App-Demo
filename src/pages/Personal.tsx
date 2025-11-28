@@ -25,7 +25,6 @@ export default function Personal() {
   const [packageUrl, setPackageUrl] = useState<string | null>(null);
   const [factory, setFactory] = useState<string>('');
   const [previousInspection, setPreviousInspection] = useState<string>('');
-  const [demoDataSet, setDemoDataSet] = useState<string>('');
   const [product, setProduct] = useState<string>('');
   const [showNgDetail, setShowNgDetail] = useState<boolean>(false);
   const [pdfs, setPdfs] = useState<{ name: string; url: string }[]>([]);
@@ -369,8 +368,6 @@ export default function Personal() {
   const canNext = () => {
     // データ入力画面（current === 0）の場合、全ての必須項目が入力されているかチェック
     if (current === 0) {
-      // デモ用データが選択されているか
-      if (!demoDataSet) return false;
       // 版下PDFが選択されているか
       if (!pdfNone || !pdfNoneUrl) return false;
       // 台紙PDFが選択されているか
@@ -387,116 +384,92 @@ export default function Personal() {
 
   return (
     <div>
-
-      <div className="wizard" style={current === 5 ? { marginBottom: 2 } : undefined}>
-        {(() => {
-          const visibleSteps = steps.filter(s => s.key !== 'confirm');
-          const currentForIndicator = (() => {
-            let idx = current;
-            // 確認ステップ（非表示）にいる場合は一つ前の表示ステップをアクティブ表示
-            while (idx >= 0 && steps[idx]?.key === 'confirm') idx--;
-            return Math.max(0, idx);
-          })();
-          return (
-            <div className="steps" style={{ gridTemplateColumns: `repeat(${visibleSteps.length}, 1fr)` }}>
-              {visibleSteps.map((s, visibleIdx) => {
-                const actualIdx = steps.findIndex(t => t.key === s.key);
-                const isActive = actualIdx === currentForIndicator;
-                const isCompleted = actualIdx < currentForIndicator;
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 700, textAlign: 'left' }}>デザイン検査</h2>
+        <div className="wizard" style={{ flex: 1, maxWidth: '800px', marginLeft: 8 }}>
+          {(() => {
+            const visibleSteps = steps.filter(s => s.key !== 'confirm');
+            const currentForIndicator = (() => {
+              let idx = current;
+              // 確認ステップ（非表示）にいる場合は一つ前の表示ステップをアクティブ表示
+              while (idx >= 0 && steps[idx]?.key === 'confirm') idx--;
+              return Math.max(0, idx);
+            })();
             return (
-              <div key={s.key} className={`step${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}>
-                    <div className="step-badge">{isCompleted ? '✓' : visibleIdx + 1}</div>
-                <div className="step-title">{s.title}</div>
-                    {visibleIdx < visibleSteps.length - 1 && <div className="step-connector" />}
-              </div>
+              <div className="steps" style={{ gridTemplateColumns: `repeat(${visibleSteps.length}, 1fr)` }}>
+                {visibleSteps.map((s, visibleIdx) => {
+                  const actualIdx = steps.findIndex(t => t.key === s.key);
+                  const isActive = actualIdx === currentForIndicator;
+                  const isCompleted = actualIdx < currentForIndicator;
+              return (
+                <div key={s.key} className={`step${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}>
+                      <div className="step-badge">{isCompleted ? '✓' : visibleIdx + 1}</div>
+                  <div className="step-title">{s.title}</div>
+                      {visibleIdx < visibleSteps.length - 1 && <div className="step-connector" />}
+                </div>
+              );
+            })}
+          </div>
             );
-          })}
+          })()}
         </div>
-          );
-        })()}
+      </div>
+      <div className="wizard" style={current === 5 ? { marginBottom: 2 } : undefined}>
 
         <div className={`card scrollable ${current === 0 ? 'data-input-panel' : ''}`} style={current === 5 ? { maxHeight: 'none', overflow: 'visible' } : undefined}>
         {current === 0 && (
             <div className="data-input-form" style={{ display: 'grid', gap: 12 }}>
               <div>
                 <label className="form-label" style={{ marginBottom: 12, textAlign: 'center', display: 'block' }}>検査対象PDF</label>
+                <div className="form-hint" style={{ marginBottom: 12, textAlign: 'center', display: 'block', color: '#666' }}>※デモでは版下PDFは design.pdf、台紙PDFは mount.pdf のみ受け付けます</div>
                 <div className="card" style={{ padding: 12 }}>
-                  <div style={{ display: 'grid', gap: 12 }}>
-                    <div className="form-row">
-                      <label className="form-label" htmlFor="demoDataSet">デモ用データを選択</label>
-                      <div className="control-offset">
-                        <select
-                          id="demoDataSet"
-                          className={`form-select ${!demoDataSet ? 'pulse-select' : ''}`}
-                          style={{ 
-                            maxWidth: 'calc(33.333% - 8px)',
-                            borderColor: '#9333ea',
-                            borderWidth: '2px',
-                            boxShadow: demoDataSet ? '0 0 0 3px rgba(147, 51, 234, 0.1)' : 'none',
-                            background: demoDataSet ? '#fff' : 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-                            transition: 'all 0.3s ease'
-                          }}
-                          value={demoDataSet}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setDemoDataSet(value);
-                            if (value === 'dummy1') {
-                              // デモ用データを設定
-                              const designUrl = '/api/data/demo/KORE1_NG/design.pdf';
-                              const mountUrl = '/api/data/demo/KORE1_NG/mount.pdf';
-                              console.log('Setting demo PDFs:', { designUrl, mountUrl });
-                              setPdfNone('design.pdf');
-                              setPdfNoneUrl(designUrl);
-                              setPdfConstraint('mount.pdf');
-                              setPdfConstraintUrl(mountUrl);
-                            } else if (value === '') {
-                              setPdfNone('');
-                              setPdfNoneUrl(null);
-                              setPdfConstraint('');
-                              setPdfConstraintUrl(null);
-                            }
-                          }}
-                        >
-                          <option value="">選択してください</option>
-                          <option value="dummy1">野菜一日これ一本 200ml NG</option>
-                        </select>
-                        <div className="form-hint" style={{ margin: 0, marginTop: 4 }}>※本番ではファイル選択が可能ですが、デモではプリセットからの選択のみとなります</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
-                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverNone(true); }}
                       onDragLeave={(e) => { e.preventDefault(); setIsDragOverNone(false); }}
                       onDrop={(e) => {
                         e.preventDefault();
                         setIsDragOverNone(false);
-                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                        const f = e.dataTransfer.files?.[0];
+                        if (!f || f.type !== 'application/pdf') return;
+                        if (f.name !== 'design.pdf') {
+                          alert('版下PDFは design.pdf のみ受け付けます。');
+                          return;
+                        }
+                        const url = URL.createObjectURL(f);
+                        setPdfNoneUrl(url);
+                        setPdfNone(f.name);
                       }}
                       onClick={() => {
-                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                        if (!pdfNone) pdfNoneFileInputRef.current?.click();
                       }}
                       style={{
                         border: `2px dashed ${isDragOverNone ? 'var(--accent)' : 'var(--border)'}`,
-                        background: isDragOverNone ? '#f1ecff' : (pdfNone ? '#fff' : '#f3f4f6'),
+                        background: isDragOverNone ? '#f1ecff' : (pdfNone ? '#fff' : 'transparent'),
                         borderRadius: 10,
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: pdfNone ? 'default' : 'not-allowed',
-                        opacity: pdfNone ? 1 : 0.6,
+                        cursor: pdfNone ? 'default' : 'pointer',
                       }}
-                      title={pdfNone ? "ここに版下PDFをドロップ" : "デモ用データセットから選択してください"}
+                      title={pdfNone ? "ここに版下PDFをドロップ" : "クリックまたはドラッグアンドドロップで版下PDFを選択"}
                     >
                       <input
                         ref={pdfNoneFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
-                        disabled
                         onChange={(e) => {
-                          // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                          const f = e.target.files?.[0];
+                          if (!f || f.type !== 'application/pdf') return;
+                          if (f.name !== 'design.pdf') {
+                            alert('版下PDFは design.pdf のみ受け付けます。');
+                            return;
+                          }
+                          const url = URL.createObjectURL(f);
+                          setPdfNoneUrl(url);
+                          setPdfNone(f.name);
                         }}
                       />
                       <div className="form-label nowrap" style={{ marginBottom: 6 }}>版下PDF<span className="label-note">*包材制約表示なし</span></div>
@@ -519,37 +492,51 @@ export default function Personal() {
                       )}
                     </div>
                     <div
-                      onDragOver={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
-                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
+                      onDragEnter={(e) => { e.preventDefault(); setIsDragOverConstraint(true); }}
                       onDragLeave={(e) => { e.preventDefault(); setIsDragOverConstraint(false); }}
                       onDrop={(e) => {
                         e.preventDefault();
                         setIsDragOverConstraint(false);
-                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                        const f = e.dataTransfer.files?.[0];
+                        if (!f || f.type !== 'application/pdf') return;
+                        if (f.name !== 'mount.pdf') {
+                          alert('台紙PDFは mount.pdf のみ受け付けます。');
+                          return;
+                        }
+                        const url = URL.createObjectURL(f);
+                        setPdfConstraintUrl(url);
+                        setPdfConstraint(f.name);
                       }}
                       onClick={() => {
-                        // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                        if (!pdfConstraint) pdfConstraintFileInputRef.current?.click();
                       }}
                       style={{
                         border: `2px dashed ${isDragOverConstraint ? 'var(--accent)' : 'var(--border)'}`,
-                        background: isDragOverConstraint ? '#f1ecff' : (pdfConstraint ? '#fff' : '#f3f4f6'),
+                        background: isDragOverConstraint ? '#f1ecff' : (pdfConstraint ? '#fff' : 'transparent'),
                         borderRadius: 10,
                         padding: 12,
                         minHeight: 200,
                         overflow: 'hidden',
-                        cursor: pdfConstraint ? 'default' : 'not-allowed',
-                        opacity: pdfConstraint ? 1 : 0.6,
+                        cursor: pdfConstraint ? 'default' : 'pointer',
                       }}
-                      title={pdfConstraint ? "ここに台紙PDFをドロップ" : "デモ用データセットから選択してください"}
+                      title={pdfConstraint ? "ここに台紙PDFをドロップ" : "クリックまたはドラッグアンドドロップで台紙PDFを選択"}
                     >
                       <input
                         ref={pdfConstraintFileInputRef}
                         type="file"
                         accept="application/pdf"
                         style={{ display: 'none' }}
-                        disabled
                         onChange={(e) => {
-                          // PDF選択は無効化（デモ用データセットからの選択のみ有効）
+                          const f = e.target.files?.[0];
+                          if (!f || f.type !== 'application/pdf') return;
+                          if (f.name !== 'mount.pdf') {
+                            alert('台紙PDFは mount.pdf のみ受け付けます。');
+                            return;
+                          }
+                          const url = URL.createObjectURL(f);
+                          setPdfConstraintUrl(url);
+                          setPdfConstraint(f.name);
                         }}
                       />
                       <div className="form-label" style={{ marginBottom: 6 }}>台紙PDF</div>
@@ -583,19 +570,16 @@ export default function Personal() {
                     <div className="control-offset">
                       <select
                         id="previousInspection"
-                        className={`form-select ${demoDataSet && !previousInspection ? 'pulse-select' : ''}`}
+                        className="form-select"
                         style={{ 
                           maxWidth: 'calc(33.333% - 8px)',
-                          borderColor: demoDataSet ? (previousInspection ? '#9333ea' : '#9333ea') : '#e2e8f0',
-                          borderWidth: demoDataSet ? '2px' : '1px',
-                          boxShadow: demoDataSet && previousInspection ? '0 0 0 3px rgba(147, 51, 234, 0.1)' : 'none',
-                          background: demoDataSet ? (previousInspection ? '#fff' : 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)') : '#f3f4f6',
-                          cursor: demoDataSet ? 'pointer' : 'not-allowed',
-                          opacity: demoDataSet ? 1 : 0.6,
+                          borderColor: previousInspection ? '#9333ea' : '#e2e8f0',
+                          borderWidth: previousInspection ? '2px' : '1px',
+                          boxShadow: previousInspection ? '0 0 0 3px rgba(147, 51, 234, 0.1)' : 'none',
+                          background: '#fff',
                           transition: 'all 0.3s ease'
                         }}
                         value={previousInspection}
-                        disabled={!demoDataSet}
                         onChange={(e) => {
                           const value = e.target.value;
                           setPreviousInspection(value);
@@ -1906,8 +1890,8 @@ export default function Personal() {
           display: 'flex', 
           gap: 12, 
           justifyContent: 'flex-end', 
-          marginTop: current === 4 ? 2 : 0,
-          paddingTop: current === 0 ? 0 : current === 4 ? 0 : '16px',
+          marginTop: current === 3 ? -8 : current === 4 ? 2 : 0,
+          paddingTop: current === 0 ? 0 : current === 3 ? 8 : current === 4 ? 0 : '16px',
           paddingBottom: current === 4 ? 8 : '16px',
           borderTop: '1px solid var(--border)'
         }}>

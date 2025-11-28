@@ -41,14 +41,14 @@ export default function BasePaperList() {
         <div className="table">
           <div className="thead">
             <div className="tr" style={{ display: 'grid', gridTemplateColumns: '160px 1fr 100px 120px' }}>
-              <div className="th" style={{ width: 160, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('company')}>
+              <div className="th" style={{ width: 160, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('company')}>
                 <span>印刷会社</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'company' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
                   <span style={{ opacity: sort.key === 'company' && sort.dir === 'desc' ? 1 : 0.5 }}>▼</span>
                 </span>
               </div>
-              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('name')}>
+              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('name')}>
                 <span>台紙名</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'name' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>

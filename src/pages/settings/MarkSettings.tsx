@@ -289,76 +289,13 @@ export default function MarkSettings() {
         marginTop: 16,
         padding: '16px 0',
         borderTop: '1px solid var(--border)',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         position: 'sticky',
         bottom: 0,
         background: 'var(--bg)',
         zIndex: 10
       }}>
-        <button 
-          onClick={() => alert('ダミー登録')}
-          style={{
-            padding: '8px 16px',
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#ffffff',
-            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '0 4px 14px rgba(147, 51, 234, 0.25)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(147, 51, 234, 0.35)';
-            e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(147, 51, 234, 0.25)';
-            e.currentTarget.style.background = 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >登録</button>
-        <button 
-          onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setHasBorder(false); setBorderType(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}
-          style={{
-            padding: '8px 14px',
-            fontSize: '12px',
-            fontWeight: 600,
-            color: '#64748b',
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 5
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#f8fafc';
-            e.currentTarget.style.borderColor = '#cbd5e1';
-            e.currentTarget.style.transform = 'translateY(-1px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = '#ffffff';
-            e.currentTarget.style.borderColor = '#e2e8f0';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-          }}
-        >クリア</button>
         <button 
           onClick={() => navigate('/settings/mark')}
           style={{
@@ -397,6 +334,54 @@ export default function MarkSettings() {
           </svg>
           一覧に戻る
         </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <span
+            onClick={() => { setMarkName(''); setMarkPdfName(''); setMarkPdfUrl(null); setMinWidthMm(''); setMaxWidthMm(''); setMinHeightMm(''); setMaxHeightMm(''); setHasClearSpace(false); setClearMinWidthMm(''); setClearMaxWidthMm(''); setClearMinHeightMm(''); setClearMaxHeightMm(''); setHasBorder(false); setBorderType(''); setCategory(''); setNewCategory(''); setShowNewCategory(false); setShapeOnly(false); }}
+            style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#64748b',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = '#475569';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = '#64748b';
+            }}
+          >クリア</span>
+          <button 
+            onClick={() => alert('ダミー登録')}
+          style={{
+            padding: '8px 16px',
+            fontSize: '12px',
+            fontWeight: 700,
+            color: '#ffffff',
+            background: 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 4px 14px rgba(147, 51, 234, 0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 6px 20px rgba(147, 51, 234, 0.35)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(147, 51, 234, 0.25)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #9333ea 0%, #7c3aed 100%)';
+          }}
+          onMouseDown={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >登録</button>
+        </div>
       </div>
     </div>
   );

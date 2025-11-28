@@ -106,33 +106,34 @@ export default function Group() {
   }, [sorted, grouped, expandedIds, collapsingIds]);
   return (
     <div className="group-container">
+      <h2 style={{ margin: 0, marginBottom: 16, fontSize: '14px', fontWeight: 700, textAlign: 'left' }}>検査記録</h2>
       <div className="card scrollable">
         <div className="form-hint" style={{ marginBottom: 8 }}>項目名をクリックするとソートできます。</div>
         <div className="table results">
           <div className="thead">
             <div className="tr" style={{ gridTemplateColumns: '120px 200px 1fr 140px 120px 120px' }}>
-              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('id')}>
+              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('id')}>
                 <span>ID</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'id' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
                   <span style={{ opacity: sort.key === 'id' && sort.dir === 'desc' ? 1 : 0.5 }}>▼</span>
                 </span>
               </div>
-              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('at')}>
+              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('at')}>
                 <span>日時</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'at' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
                   <span style={{ opacity: sort.key === 'at' && sort.dir === 'desc' ? 1 : 0.5 }}>▼</span>
                 </span>
               </div>
-              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('packageName')}>
+              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('packageName')}>
                 <span>パッケージ名</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'packageName' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
                   <span style={{ opacity: sort.key === 'packageName' && sort.dir === 'desc' ? 1 : 0.5 }}>▼</span>
                 </span>
               </div>
-              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('executor')}>
+              <div className="th" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('executor')}>
                 <span>実行ユーザー</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'executor' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
@@ -168,13 +169,11 @@ export default function Group() {
                     <div className="td">
                       <button
                         className="menu-item btn-small"
-                        style={{ background: 'transparent', border: 'none', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ background: 'transparent', border: 'none', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000000' }}
                         onClick={() => navigate(`/group/${record.id}?at=${encodeURIComponent(record.at)}`)}
                         aria-label={`${record.id} の詳細`}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#4b5563"/>
-                        </svg>
+                        詳細
                       </button>
                     </div>
                   </div>
@@ -190,13 +189,11 @@ export default function Group() {
                       <div className="td">
                         <button
                           className="menu-item btn-small"
-                          style={{ background: 'transparent', border: 'none', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ background: 'transparent', border: 'none', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000000' }}
                           onClick={() => navigate(`/group/${r.id}?at=${encodeURIComponent(r.at)}`)}
                           aria-label={`${r.id} の詳細`}
                         >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="#4b5563"/>
-                          </svg>
+                          詳細
                         </button>
                       </div>
                     </div>

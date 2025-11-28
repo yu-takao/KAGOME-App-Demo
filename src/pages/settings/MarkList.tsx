@@ -65,14 +65,14 @@ export default function MarkList() {
         <div className="table">
           <div className="thead">
             <div className="tr" style={{ display: 'grid', gridTemplateColumns: '2fr 160px 160px 120px' }}>
-              <div className="th" style={{ whiteSpace: 'nowrap', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('name')}>
+              <div className="th" style={{ whiteSpace: 'nowrap', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('name')}>
                 <span>マーク名</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'name' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
                   <span style={{ opacity: sort.key === 'name' && sort.dir === 'desc' ? 1 : 0.5 }}>▼</span>
                 </span>
               </div>
-              <div className="th" style={{ width: 140, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => toggleSort('category')}>
+              <div className="th" style={{ width: 140, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} onClick={() => toggleSort('category')}>
                 <span>カテゴリ</span>
                 <span aria-hidden="true" style={{ color: 'var(--muted)', display: 'flex', flexDirection: 'column', lineHeight: 1, fontSize: 10 }}>
                   <span style={{ opacity: sort.key === 'category' && sort.dir === 'asc' ? 1 : 0.5 }}>▲</span>
