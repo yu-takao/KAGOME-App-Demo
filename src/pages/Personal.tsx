@@ -384,9 +384,9 @@ export default function Personal() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 700, textAlign: 'left' }}>デザイン検査</h2>
-        <div className="wizard" style={{ flex: 1, maxWidth: '800px', marginLeft: 8 }}>
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ margin: 0, marginBottom: 12, fontSize: '14px', fontWeight: 700, textAlign: 'left' }}>デザイン検査</h2>
+        <div className="wizard" style={{ display: 'flex', justifyContent: 'center' }}>
           {(() => {
             const visibleSteps = steps.filter(s => s.key !== 'confirm');
             const currentForIndicator = (() => {
@@ -396,7 +396,7 @@ export default function Personal() {
               return Math.max(0, idx);
             })();
             return (
-              <div className="steps" style={{ gridTemplateColumns: `repeat(${visibleSteps.length}, 1fr)` }}>
+              <div className="steps" style={{ gridTemplateColumns: `repeat(${visibleSteps.length}, 1fr)`, width: '100%', maxWidth: '990px' }}>
                 {visibleSteps.map((s, visibleIdx) => {
                   const actualIdx = steps.findIndex(t => t.key === s.key);
                   const isActive = actualIdx === currentForIndicator;
@@ -420,8 +420,8 @@ export default function Personal() {
         {current === 0 && (
             <div className="data-input-form" style={{ display: 'grid', gap: 12 }}>
               <div>
-                <label className="form-label" style={{ marginBottom: 12, textAlign: 'center', display: 'block' }}>検査対象PDF</label>
-                <div className="form-hint" style={{ marginBottom: 12, textAlign: 'center', display: 'block', color: '#666' }}>※デモでは版下PDFは design.pdf、台紙PDFは mount.pdf のみ受け付けます</div>
+                <label className="form-label" style={{ marginBottom: 12, textAlign: 'left', display: 'block' }}>検査対象PDF</label>
+                <div className="form-hint" style={{ marginBottom: 12, textAlign: 'left', display: 'block', color: '#666' }}>※デモでは版下PDFは design.pdf、台紙PDFは mount.pdf のみ受け付けます</div>
                 <div className="card" style={{ padding: 12 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                     <div
@@ -562,7 +562,7 @@ export default function Personal() {
                   </div>
               </div>
               <div>
-                <label className="form-label" style={{ marginBottom: 12, textAlign: 'center', display: 'block' }}>検査設定</label>
+                <label className="form-label" style={{ marginBottom: 12, textAlign: 'left', display: 'block' }}>検査設定</label>
                 <div className="card" style={{ padding: 12 }}>
                   <div style={{ display: 'grid', gap: 12 }}>
               <div className="form-row">
