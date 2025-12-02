@@ -416,7 +416,7 @@ export default function Personal() {
       </div>
       <div className="wizard" style={current === 5 ? { marginBottom: 2 } : undefined}>
 
-        <div className={`card scrollable ${current === 0 ? 'data-input-panel' : ''}`} style={current === 5 ? { maxHeight: 'none', overflow: 'visible' } : undefined}>
+        <div className={`card scrollable ${current === 0 ? 'data-input-panel' : ''}`} style={current === 5 ? { maxHeight: 'none', overflow: 'visible' } : current === 0 ? { maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' } : undefined}>
         {current === 0 && (
             <div className="data-input-form" style={{ display: 'grid', gap: 12 }}>
               <div>
